@@ -35,11 +35,15 @@ export default function NewProductPage() {
     const fetchCategories = async () => {
       try {
         const response = await fetch("/api/admin/categories");
+        if (!response.ok) {
+          throw new Error("Błąd pobierania kategorii");
+        }
         const data = await response.json();
-        if (data.categories) {
-          setCategories(data.categories);
-          if (data.categories.length > 0 && !formData.categoryId) {
-            setFormData(prev => ({ ...prev, categoryId: data.categories[0].id }));
+        const cats = data.categories || data;
+        if (Array.isArray(cats) && cats.length > 0) {
+          setCategories(cats);
+          if (!formData.categoryId) {
+            setFormData(prev => ({ ...prev, categoryId: cats[0].id }));
           }
         }
       } catch (error) {

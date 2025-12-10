@@ -77,8 +77,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           isFeatured: product.isFeatured,
         });
 
-        if (categoriesData.categories) {
-          setCategories(categoriesData.categories);
+        const cats = categoriesData.categories || categoriesData;
+        if (Array.isArray(cats)) {
+          setCategories(cats);
         }
       } catch (error) {
         console.error("Błąd pobierania danych:", error);
