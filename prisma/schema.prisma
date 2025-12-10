@@ -1,0 +1,184 @@
+// CraftRoni - Schemat bazy danych
+// Polski sklep z rękodziełem
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ============================================
+// UŻYTKOWNICY I AUTORYZACJA
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  orders        Order[]
+  sessions      Session[]
+  
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+// ============================================
+// PRODUKTY I KATEGORIE
+// ============================================
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  image       String?
+  parentId    String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  salePrice   Decimal? @db.Decimal(10, 2)
+  sku         String?  @unique
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  category    Category     @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@map("product_images")
+}
+
+// ============================================
+// ZAMÓWIENIA
+// ============================================
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  status          OrderStatus @default(PENDING)
+  
+  // Dane klienta
+  customerEmail   String
+  customerName    String
+  customerPhone   String?
+  
+  // Adres dostawy
+  shippingAddress String      @db.Text
+  shippingCity    String
+  shippingZip     String
+  
+  // Kwoty
+  subtotal        Decimal     @db.Decimal(10, 2)
+  shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
+  total           Decimal     @db.Decimal(10, 2)
+  
+  // Płatność
+  paymentMethod   String?
+  paymentId       String?
+  paidAt          DateTime?
+  
+  // Notatki
+  notes           String?     @db.Text
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  user            User?       @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  name      String   // Snapshot nazwy produktu
+  
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING      // Oczekuje na płatność
+  PAID         // Opłacone
+  PROCESSING   // W realizacji
+  SHIPPED      // Wysłane
+  DELIVERED    // Dostarczone
+  CANCELLED    // Anulowane
+}
+
+// ============================================
+// USTAWIENIA SKLEPU
+// ============================================
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("settings")
+}
