@@ -1,21 +1,138 @@
 import { Metadata } from "next";
+import Link from "next/link";
+import prisma from "@/lib/prisma";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { Package } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Sklep",
   description: "Przeglądaj unikalne, ręcznie robione produkty od polskich twórców",
 };
 
-// Tymczasowe dane - później z bazy
-const products = [
-  { id: "1", name: "Kolczyki z bursztynem", price: 89, category: "Biżuteria" },
-  { id: "2", name: "Ceramiczny kubek", price: 65, category: "Ceramika" },
-  { id: "3", name: "Lniana torba", price: 120, category: "Tekstylia" },
-  { id: "4", name: "Świeca sojowa", price: 45, category: "Dekoracje" },
-  { id: "5", name: "Naszyjnik z koralem", price: 150, category: "Biżuteria" },
-  { id: "6", name: "Wazon ręcznie malowany", price: 180, category: "Ceramika" },
-];
+interface SearchParams {
+  kategoria?: string;
+  sortuj?: string;
+  cena?: string;
+  strona?: string;
+  szukaj?: string;
+}
 
-export default function ShopPage() {
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const page = parseInt(params.strona || "1");
+  const limit = 12;
+  const offset = (page - 1) * limit;
+
+  // Build where clause
+  const where: any = {
+    isActive: true,
+  };
+
+  // Filter by category
+  if (params.kategoria) {
+    const category = await prisma.category.findUnique({
+      where: { slug: params.kategoria },
+    });
+    if (category) {
+      where.categoryId = category.id;
+    }
+  }
+
+  // Filter by price range
+  if (params.cena) {
+    switch (params.cena) {
+      case "0-50":
+        where.price = { lte: 50 };
+        break;
+      case "50-100":
+        where.price = { gte: 50, lte: 100 };
+        break;
+      case "100-200":
+        where.price = { gte: 100, lte: 200 };
+        break;
+      case "200+":
+        where.price = { gte: 200 };
+        break;
+    }
+  }
+
+  // Search
+  if (params.szukaj) {
+    where.OR = [
+      { name: { contains: params.szukaj } },
+      { description: { contains: params.szukaj } },
+    ];
+  }
+
+  // Build orderBy
+  let orderBy: any = { createdAt: "desc" };
+  switch (params.sortuj) {
+    case "cena-rosnaco":
+      orderBy = { price: "asc" };
+      break;
+    case "cena-malejaco":
+      orderBy = { price: "desc" };
+      break;
+    case "nazwa":
+      orderBy = { name: "asc" };
+      break;
+    case "najnowsze":
+      orderBy = { createdAt: "desc" };
+      break;
+  }
+
+  // Fetch data
+  const [rawProducts, totalCount, categories] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      },
+      orderBy,
+      skip: offset,
+      take: limit,
+    }),
+    prisma.product.count({ where }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        _count: { select: { products: { where: { isActive: true } } } },
+      },
+    }),
+  ]);
+
+  // Convert Decimal to number for Product type compatibility
+  const products = rawProducts.map((product) => ({
+    ...product,
+    price: Number(product.price),
+    salePrice: product.salePrice ? Number(product.salePrice) : null,
+  }));
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  // Helper to build URL with params
+  const buildUrl = (newParams: Record<string, string | undefined>) => {
+    const urlParams = new URLSearchParams();
+    
+    // Merge current params with new ones
+    const merged = { ...params, ...newParams };
+    
+    Object.entries(merged).forEach(([key, value]) => {
+      if (value && value !== "") {
+        urlParams.set(key, value);
+      }
+    });
+    
+    const queryString = urlParams.toString();
+    return `/sklep${queryString ? `?${queryString}` : ""}`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
@@ -26,7 +143,6 @@ export default function ShopPage() {
         </p>
       </div>
 
-      {/* Filters - placeholder */}
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="w-full lg:w-64 flex-shrink-0">
@@ -34,112 +150,188 @@ export default function ShopPage() {
             <h2 className="font-semibold text-gray-900 mb-4">Kategorie</h2>
             <ul className="space-y-2">
               <li>
-                <button className="text-gray-600 hover:text-red-600 transition-colors">
+                <Link
+                  href="/sklep"
+                  className={`block py-1 transition-colors ${
+                    !params.kategoria
+                      ? "text-red-600 font-medium"
+                      : "text-gray-600 hover:text-red-600"
+                  }`}
+                >
                   Wszystkie produkty
-                </button>
+                </Link>
               </li>
-              <li>
-                <button className="text-gray-600 hover:text-red-600 transition-colors">
-                  Biżuteria
-                </button>
-              </li>
-              <li>
-                <button className="text-gray-600 hover:text-red-600 transition-colors">
-                  Ceramika
-                </button>
-              </li>
-              <li>
-                <button className="text-gray-600 hover:text-red-600 transition-colors">
-                  Tekstylia
-                </button>
-              </li>
-              <li>
-                <button className="text-gray-600 hover:text-red-600 transition-colors">
-                  Dekoracje
-                </button>
-              </li>
+              {categories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={buildUrl({ kategoria: category.slug, strona: undefined })}
+                    className={`block py-1 transition-colors ${
+                      params.kategoria === category.slug
+                        ? "text-red-600 font-medium"
+                        : "text-gray-600 hover:text-red-600"
+                    }`}
+                  >
+                    {category.name}
+                    <span className="text-gray-400 text-sm ml-1">
+                      ({category._count.products})
+                    </span>
+                  </Link>
+                </li>
+              ))}
             </ul>
 
             <hr className="my-6 border-gray-200" />
 
             <h2 className="font-semibold text-gray-900 mb-4">Cena</h2>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded text-red-600 mr-2" />
-                <span className="text-gray-600">Do 50 zł</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded text-red-600 mr-2" />
-                <span className="text-gray-600">50 - 100 zł</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded text-red-600 mr-2" />
-                <span className="text-gray-600">100 - 200 zł</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded text-red-600 mr-2" />
-                <span className="text-gray-600">Powyżej 200 zł</span>
-              </label>
-            </div>
+            <ul className="space-y-2">
+              {[
+                { value: "", label: "Wszystkie ceny" },
+                { value: "0-50", label: "Do 50 zł" },
+                { value: "50-100", label: "50 - 100 zł" },
+                { value: "100-200", label: "100 - 200 zł" },
+                { value: "200+", label: "Powyżej 200 zł" },
+              ].map((priceRange) => (
+                <li key={priceRange.value}>
+                  <Link
+                    href={buildUrl({ 
+                      cena: priceRange.value || undefined, 
+                      strona: undefined 
+                    })}
+                    className={`block py-1 transition-colors ${
+                      (params.cena || "") === priceRange.value
+                        ? "text-red-600 font-medium"
+                        : "text-gray-600 hover:text-red-600"
+                    }`}
+                  >
+                    {priceRange.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* Clear filters */}
+            {(params.kategoria || params.cena || params.szukaj) && (
+              <>
+                <hr className="my-6 border-gray-200" />
+                <Link
+                  href="/sklep"
+                  className="block text-center py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Wyczyść filtry
+                </Link>
+              </>
+            )}
           </div>
         </aside>
 
         {/* Products grid */}
         <div className="flex-1">
-          {/* Sort */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Sort & count */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <p className="text-gray-600">
-              Znaleziono <span className="font-semibold">{products.length}</span> produktów
+              Znaleziono <span className="font-semibold">{totalCount}</span> produktów
             </p>
-            <select className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
-              <option>Sortuj: Domyślnie</option>
-              <option>Cena: od najniższej</option>
-              <option>Cena: od najwyższej</option>
-              <option>Nazwa: A-Z</option>
-              <option>Najnowsze</option>
-            </select>
-          </div>
-
-          {/* Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <div key={product.id} className="group">
-                <div className="aspect-square bg-gray-100 rounded-xl mb-4 flex items-center justify-center relative overflow-hidden">
-                  <span className="text-gray-400 text-sm">[Zdjęcie]</span>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                  <button className="absolute bottom-4 left-4 right-4 bg-white py-2 rounded-lg font-medium text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Dodaj do koszyka
-                  </button>
-                </div>
-                <p className="text-sm text-gray-500 mb-1">{product.category}</p>
-                <h3 className="font-medium text-gray-900 group-hover:text-red-600 transition-colors mb-1">
-                  {product.name}
-                </h3>
-                <p className="text-red-600 font-semibold">{product.price} zł</p>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 text-sm">Sortuj:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "najnowsze", label: "Najnowsze" },
+                  { value: "cena-rosnaco", label: "Cena ↑" },
+                  { value: "cena-malejaco", label: "Cena ↓" },
+                  { value: "nazwa", label: "A-Z" },
+                ].map((sort) => (
+                  <Link
+                    key={sort.value}
+                    href={buildUrl({ sortuj: sort.value, strona: undefined })}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                      params.sortuj === sort.value
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {sort.label}
+                  </Link>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* Pagination placeholder */}
-          <div className="mt-12 flex justify-center">
-            <nav className="flex items-center space-x-2">
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-                Poprzednia
-              </button>
-              <button className="px-4 py-2 bg-red-600 text-white rounded-lg">
-                1
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-                2
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-                3
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-                Następna
-              </button>
-            </nav>
-          </div>
+          {/* Products */}
+          {products.length === 0 ? (
+            <div className="text-center py-16">
+              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">
+                Brak produktów
+              </h3>
+              <p className="text-gray-500 mb-6">
+                Nie znaleziono produktów spełniających wybrane kryteria.
+              </p>
+              <Link
+                href="/sklep"
+                className="inline-block px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Zobacz wszystkie produkty
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex justify-center">
+              <nav className="flex items-center space-x-2">
+                {page > 1 && (
+                  <Link
+                    href={buildUrl({ strona: String(page - 1) })}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                  >
+                    Poprzednia
+                  </Link>
+                )}
+                
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+                  
+                  return (
+                    <Link
+                      key={pageNum}
+                      href={buildUrl({ strona: String(pageNum) })}
+                      className={`px-4 py-2 rounded-lg ${
+                        page === pageNum
+                          ? "bg-red-600 text-white"
+                          : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </Link>
+                  );
+                })}
+                
+                {page < totalPages && (
+                  <Link
+                    href={buildUrl({ strona: String(page + 1) })}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                  >
+                    Następna
+                  </Link>
+                )}
+              </nav>
+            </div>
+          )}
         </div>
       </div>
     </div>

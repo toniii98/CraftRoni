@@ -1,65 +1,36 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Grid3X3, ArrowRight } from "lucide-react";
+import prisma from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Kategorie",
   description: "Przeglądaj kategorie produktów rękodzielniczych - biżuteria, ceramika, tekstylia, drewno i więcej",
 };
 
-// Przykładowe kategorie - później z bazy danych
-const categories = [
-  {
-    id: "1",
-    name: "Biżuteria",
-    slug: "bizuteria",
-    description: "Ręcznie robiona biżuteria z naturalnych materiałów",
-    productCount: 24,
-    image: "/images/categories/bizuteria.jpg",
-  },
-  {
-    id: "2",
-    name: "Ceramika",
-    slug: "ceramika",
-    description: "Unikalne wyroby ceramiczne tworzone tradycyjnymi metodami",
-    productCount: 18,
-    image: "/images/categories/ceramika.jpg",
-  },
-  {
-    id: "3",
-    name: "Tekstylia",
-    slug: "tekstylia",
-    description: "Tkaniny, koce i dekoracje wykonane ręcznie",
-    productCount: 15,
-    image: "/images/categories/tekstylia.jpg",
-  },
-  {
-    id: "4",
-    name: "Drewno",
-    slug: "drewno",
-    description: "Wyroby z drewna - od dekoracji po praktyczne przedmioty",
-    productCount: 12,
-    image: "/images/categories/drewno.jpg",
-  },
-  {
-    id: "5",
-    name: "Świece i aromaty",
-    slug: "swiece-aromaty",
-    description: "Naturalne świece i produkty aromatyczne",
-    productCount: 20,
-    image: "/images/categories/swiece.jpg",
-  },
-  {
-    id: "6",
-    name: "Rękodzieło ludowe",
-    slug: "rekodzielo-ludowe",
-    description: "Tradycyjne polskie rękodzieło i sztuka ludowa",
-    productCount: 8,
-    image: "/images/categories/ludowe.jpg",
-  },
-];
+// Emoji mapping dla kategorii
+const categoryEmojis: Record<string, string> = {
+  "bizuteria": "💎",
+  "ceramika": "🏺",
+  "tekstylia": "🧶",
+  "drewno": "🪵",
+  "swiece-aromaty": "🕯️",
+  "rekodzielo-ludowe": "🎨",
+};
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      _count: {
+        select: { products: { where: { isActive: true } } },
+      },
+    },
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
@@ -87,16 +58,19 @@ export default function CategoriesPage() {
           >
             {/* Image */}
             <div className="aspect-[4/3] bg-gradient-to-br from-red-50 to-orange-50 relative overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-6xl opacity-50">
-                  {category.slug === "bizuteria" && "💎"}
-                  {category.slug === "ceramika" && "🏺"}
-                  {category.slug === "tekstylia" && "🧶"}
-                  {category.slug === "drewno" && "🪵"}
-                  {category.slug === "swiece-aromaty" && "🕯️"}
-                  {category.slug === "rekodzielo-ludowe" && "🎨"}
-                </span>
-              </div>
+              {category.image ? (
+                <img 
+                  src={category.image} 
+                  alt={category.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-6xl opacity-50">
+                    {categoryEmojis[category.slug] || "📦"}
+                  </span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
 
@@ -115,7 +89,7 @@ export default function CategoriesPage() {
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <span className="text-sm text-gray-500">
-                  {category.productCount} produktów
+                  {category._count.products} produktów
                 </span>
               </div>
             </div>
