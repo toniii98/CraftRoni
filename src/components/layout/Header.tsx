@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, ShoppingCart, User, Search } from "lucide-react";
 import { siteConfig } from "@/lib/config";
+import { useCart } from "@/context/CartContext";
 
 const navigation = [
   { name: "Strona główna", href: "/" },
@@ -15,7 +16,10 @@ const navigation = [
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const cartItemsCount = 0; // TODO: Podłączyć do koszyka
+  const { cart } = useCart();
+  
+  // Oblicz całkowitą liczbę produktów w koszyku
+  const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -72,9 +76,9 @@ export function Header() {
               aria-label="Koszyk"
             >
               <ShoppingCart className="h-5 w-5" />
-              {cartItemsCount > 0 && (
+              {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemsCount}
+                  {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
             </Link>

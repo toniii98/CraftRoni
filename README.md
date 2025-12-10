@@ -1,9 +1,9 @@
 # 🎨 CraftRoni - Polski Sklep z Rękodziełem
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38bdf8)
-![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748)
 ![MySQL](https://img.shields.io/badge/MySQL-MariaDB-4479A1)
 
 > Unikalne, ręcznie robione produkty od polskich twórców.
@@ -30,17 +30,17 @@ CraftRoni to sklep internetowy z polskim rękodziełem. Projekt powstał jako:
 - ✅ Katalog produktów z kategoriami
 - ✅ Koszyk i proces zakupowy
 - ✅ Panel administracyjny
-- ✅ Integracja z Przelewy24
-- ✅ Widget Instagram
+- 🔄 Integracja z Przelewy24 (w przygotowaniu)
+- 📋 Widget Instagram (planowany)
 
 ## 🛠 Technologie
 
 | Warstwa | Technologia |
 |---------|-------------|
-| Frontend | Next.js 14 (App Router) |
+| Frontend | Next.js 16 (App Router) |
 | Język | TypeScript |
-| Stylowanie | Tailwind CSS |
-| ORM | Prisma |
+| Stylowanie | Tailwind CSS 4 |
+| ORM | Prisma 6 |
 | Baza danych | MySQL (MariaDB) |
 | Płatności | Przelewy24 |
 | Ikony | Lucide React |
@@ -56,7 +56,7 @@ CraftRoni to sklep internetowy z polskim rękodziełem. Projekt powstał jako:
 
 1. **Sklonuj repozytorium:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/CraftRoni.git
+git clone https://github.com/toniii98/CraftRoni.git
 cd CraftRoni
 ```
 
@@ -72,14 +72,19 @@ cp .env.example .env
 
 4. **Skonfiguruj zmienne środowiskowe** (patrz sekcja [Konfiguracja](#-konfiguracja))
 
-5. **Uruchom migracje bazy danych:**
+5. **Wygeneruj klienta Prisma:**
 ```bash
-npx prisma migrate dev
+npm run db:generate
 ```
 
-6. **Wygeneruj klienta Prisma:**
+6. **Zastosuj schemat do bazy danych:**
 ```bash
-npx prisma generate
+npm run db:push
+```
+
+7. **Wypełnij bazę przykładowymi danymi (opcjonalnie):**
+```bash
+npm run db:seed
 ```
 
 ## ⚙️ Konfiguracja
