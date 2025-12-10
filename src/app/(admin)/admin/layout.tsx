@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -6,8 +5,11 @@ import {
   ShoppingCart, 
   FolderTree, 
   Settings,
-  LogOut 
+  LogOut,
+  Store
 } from "lucide-react";
+import { getSession } from "@/lib/auth";
+import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -17,16 +19,12 @@ const adminNavigation = [
   { name: "Ustawienia", href: "/admin/ustawienia", icon: Settings },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // TODO: Sprawdzenie czy użytkownik jest zalogowany jako admin
-  // const session = await getSession();
-  // if (!session || session.user.role !== "ADMIN") {
-  //   redirect("/admin/login");
-  // }
+  const session = await getSession();
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -37,6 +35,11 @@ export default function AdminLayout({
           <Link href="/admin" className="text-xl font-bold text-red-500">
             CraftRoni Admin
           </Link>
+          {session && (
+            <p className="text-xs text-gray-400 mt-1 truncate">
+              {session.email}
+            </p>
+          )}
         </div>
 
         {/* Navigation */}
@@ -57,14 +60,15 @@ export default function AdminLayout({
         </nav>
 
         {/* Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 space-y-2">
           <Link
             href="/"
             className="flex items-center gap-3 px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
           >
-            <LogOut className="h-5 w-5" />
+            <Store className="h-5 w-5" />
             Wróć do sklepu
           </Link>
+          <AdminLogoutButton />
         </div>
       </aside>
 

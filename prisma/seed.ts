@@ -332,7 +332,7 @@ async function main() {
     data: {
       email: "admin@craftroni.pl",
       name: "Administrator",
-      password: "$2a$12$placeholder_hash_change_in_production", // Placeholder - zmień w produkcji!
+      password: "$2b$12$EiI8mucsA91iVT9owxaJYOd7MB4i8i12INpmEAl5lytMmfJH7EqRa", // hasło: admin123
       role: "ADMIN",
     },
   });
