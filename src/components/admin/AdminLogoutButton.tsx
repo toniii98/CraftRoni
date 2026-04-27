@@ -25,7 +25,7 @@ export function AdminLogoutButton() {
     <button
       onClick={handleLogout}
       disabled={isLoading}
-      className="flex items-center gap-3 px-4 py-3 w-full text-gray-300 rounded-lg hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50"
+      className="flex items-center gap-3 px-4 py-3 w-full text-white/75 rounded-lg hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
     >
       <LogOut className="h-5 w-5" />
       {isLoading ? "Wylogowywanie..." : "Wyloguj się"}

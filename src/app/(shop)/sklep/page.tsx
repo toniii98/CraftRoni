@@ -137,8 +137,8 @@ export default async function ShopPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Sklep</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-foreground mb-4">Sklep</h1>
+        <p className="text-muted">
           Odkryj unikalne, ręcznie robione produkty od polskich twórców
         </p>
       </div>
@@ -146,16 +146,16 @@ export default async function ShopPage({
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Kategorie</h2>
+          <div className="bg-background rounded-lg p-6">
+            <h2 className="font-semibold text-foreground mb-4">Kategorie</h2>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/sklep"
                   className={`block py-1 transition-colors ${
                     !params.kategoria
-                      ? "text-red-600 font-medium"
-                      : "text-gray-600 hover:text-red-600"
+                      ? "text-primary font-medium"
+                      : "text-muted hover:text-primary"
                   }`}
                 >
                   Wszystkie produkty
@@ -167,12 +167,12 @@ export default async function ShopPage({
                     href={buildUrl({ kategoria: category.slug, strona: undefined })}
                     className={`block py-1 transition-colors ${
                       params.kategoria === category.slug
-                        ? "text-red-600 font-medium"
-                        : "text-gray-600 hover:text-red-600"
+                        ? "text-primary font-medium"
+                        : "text-muted hover:text-primary"
                     }`}
                   >
                     {category.name}
-                    <span className="text-gray-400 text-sm ml-1">
+                    <span className="text-muted text-sm ml-1">
                       ({category._count.products})
                     </span>
                   </Link>
@@ -180,9 +180,9 @@ export default async function ShopPage({
               ))}
             </ul>
 
-            <hr className="my-6 border-gray-200" />
+            <hr className="my-6 border-border" />
 
-            <h2 className="font-semibold text-gray-900 mb-4">Cena</h2>
+            <h2 className="font-semibold text-foreground mb-4">Cena</h2>
             <ul className="space-y-2">
               {[
                 { value: "", label: "Wszystkie ceny" },
@@ -199,8 +199,8 @@ export default async function ShopPage({
                     })}
                     className={`block py-1 transition-colors ${
                       (params.cena || "") === priceRange.value
-                        ? "text-red-600 font-medium"
-                        : "text-gray-600 hover:text-red-600"
+                        ? "text-primary font-medium"
+                        : "text-muted hover:text-primary"
                     }`}
                   >
                     {priceRange.label}
@@ -212,10 +212,10 @@ export default async function ShopPage({
             {/* Clear filters */}
             {(params.kategoria || params.cena || params.szukaj) && (
               <>
-                <hr className="my-6 border-gray-200" />
+                <hr className="my-6 border-border" />
                 <Link
                   href="/sklep"
-                  className="block text-center py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="block text-center py-2 px-4 bg-background text-foreground rounded-lg hover:bg-border transition-colors"
                 >
                   Wyczyść filtry
                 </Link>
@@ -228,11 +228,11 @@ export default async function ShopPage({
         <div className="flex-1">
           {/* Sort & count */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <p className="text-gray-600">
+            <p className="text-muted">
               Znaleziono <span className="font-semibold">{totalCount}</span> produktów
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-gray-600 text-sm">Sortuj:</span>
+              <span className="text-muted text-sm">Sortuj:</span>
               <div className="flex gap-1">
                 {[
                   { value: "najnowsze", label: "Najnowsze" },
@@ -245,8 +245,8 @@ export default async function ShopPage({
                     href={buildUrl({ sortuj: sort.value, strona: undefined })}
                     className={`px-3 py-1 rounded text-sm transition-colors ${
                       params.sortuj === sort.value
-                        ? "bg-red-600 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-primary text-white"
+                        : "bg-background text-muted hover:bg-background"
                     }`}
                   >
                     {sort.label}
@@ -259,16 +259,16 @@ export default async function ShopPage({
           {/* Products */}
           {products.length === 0 ? (
             <div className="text-center py-16">
-              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
+              <Package className="h-16 w-16 text-muted/40 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-foreground mb-2">
                 Brak produktów
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-muted mb-6">
                 Nie znaleziono produktów spełniających wybrane kryteria.
               </p>
               <Link
                 href="/sklep"
-                className="inline-block px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
               >
                 Zobacz wszystkie produkty
               </Link>
@@ -288,7 +288,7 @@ export default async function ShopPage({
                 {page > 1 && (
                   <Link
                     href={buildUrl({ strona: String(page - 1) })}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="px-4 py-2 border border-border rounded-lg text-muted hover:bg-background"
                   >
                     Poprzednia
                   </Link>
@@ -312,8 +312,8 @@ export default async function ShopPage({
                       href={buildUrl({ strona: String(pageNum) })}
                       className={`px-4 py-2 rounded-lg ${
                         page === pageNum
-                          ? "bg-red-600 text-white"
-                          : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                          ? "bg-primary text-white"
+                          : "border border-border text-muted hover:bg-background"
                       }`}
                     >
                       {pageNum}
@@ -324,7 +324,7 @@ export default async function ShopPage({
                 {page < totalPages && (
                   <Link
                     href={buildUrl({ strona: String(page + 1) })}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="px-4 py-2 border border-border rounded-lg text-muted hover:bg-background"
                   >
                     Następna
                   </Link>

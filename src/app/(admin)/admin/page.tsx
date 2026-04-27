@@ -27,16 +27,16 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   PAID: { label: "Opłacone", color: "bg-green-100 text-green-800" },
   PROCESSING: { label: "Realizacja", color: "bg-blue-100 text-blue-800" },
   SHIPPED: { label: "Wysłane", color: "bg-purple-100 text-purple-800" },
-  DELIVERED: { label: "Dostarczone", color: "bg-gray-100 text-gray-800" },
-  CANCELLED: { label: "Anulowane", color: "bg-red-100 text-red-800" },
+  DELIVERED: { label: "Dostarczone", color: "bg-background text-foreground" },
+  CANCELLED: { label: "Anulowane", color: "bg-primary/10 text-primary-dark" },
 };
 
 export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Witaj w panelu administracyjnym CraftRoni</p>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted">Witaj w panelu administracyjnym CraftRoni</p>
       </div>
 
       {/* Stats */}
@@ -44,53 +44,53 @@ export default function AdminDashboard() {
         {stats.map((stat) => (
           <div
             key={stat.name}
-            className="bg-white rounded-xl p-6 shadow-sm"
+            className="bg-surface rounded-xl p-6 shadow-sm"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-red-100 text-red-600 rounded-lg">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg">
                 <stat.icon className="h-5 w-5" />
               </div>
               <span className="text-sm text-green-600 font-medium">
                 {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm text-gray-600">{stat.name}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-sm text-muted">{stat.name}</p>
           </div>
         ))}
       </div>
 
       {/* Recent orders */}
-      <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-surface rounded-xl shadow-sm">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             Ostatnie zamówienia
           </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Nr zamówienia
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Klient
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Kwota
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
                   Akcje
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {recentOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
+                <tr key={order.id} className="hover:bg-background">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="font-mono text-sm">{order.id}</span>
                   </td>
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <button className="text-red-600 hover:text-red-700 text-sm font-medium">
+                    <button className="text-primary hover:text-primary-dark text-sm font-medium">
                       Szczegóły
                     </button>
                   </td>
@@ -119,10 +119,10 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-border">
           <a
             href="/admin/zamowienia"
-            className="text-red-600 hover:text-red-700 text-sm font-medium"
+            className="text-primary hover:text-primary-dark text-sm font-medium"
           >
             Zobacz wszystkie zamówienia →
           </a>

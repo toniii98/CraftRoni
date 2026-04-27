@@ -69,8 +69,8 @@ export default function AdminSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ustawienia</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Ustawienia</h1>
+          <p className="text-muted mt-1">
             Konfiguracja sklepu i integracje
           </p>
         </div>
@@ -81,15 +81,15 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-6 border-b border-border">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab.id
-                ? "border-red-600 text-red-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted hover:text-foreground"
             }`}
           >
             <tab.icon className="h-4 w-4" />
@@ -99,11 +99,11 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-surface rounded-xl border border-border p-6">
         {/* Ogólne */}
         {activeTab === "general" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Informacje o sklepie
             </h2>
             
@@ -136,7 +136,7 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Opis sklepu
               </label>
               <textarea
@@ -144,7 +144,7 @@ export default function AdminSettingsPage() {
                 value={settings.storeDescription}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function AdminSettingsPage() {
         {/* Wysyłka */}
         {activeTab === "shipping" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Ustawienia wysyłki
             </h2>
             
@@ -199,7 +199,7 @@ export default function AdminSettingsPage() {
         {/* Płatności */}
         {activeTab === "payments" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Konfiguracja Przelewy24
             </h2>
 
@@ -210,9 +210,9 @@ export default function AdminSettingsPage() {
                 name="testMode"
                 checked={settings.testMode}
                 onChange={handleCheckboxChange}
-                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
               />
-              <label htmlFor="testMode" className="text-sm text-gray-700">
+              <label htmlFor="testMode" className="text-sm text-foreground">
                 Tryb testowy (sandbox)
               </label>
             </div>
@@ -255,7 +255,7 @@ export default function AdminSettingsPage() {
         {/* Email */}
         {activeTab === "email" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Konfiguracja SMTP
             </h2>
             
@@ -298,8 +298,8 @@ export default function AdminSettingsPage() {
               />
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-sm text-gray-600">
+            <div className="bg-background border border-border rounded-lg p-4">
+              <p className="text-sm text-muted">
                 <strong>Powiadomienia email:</strong> Po skonfigurowaniu SMTP, klienci 
                 będą otrzymywać automatyczne powiadomienia o statusie zamówień.
               </p>

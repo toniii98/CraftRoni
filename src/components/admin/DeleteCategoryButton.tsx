@@ -49,7 +49,7 @@ export function DeleteCategoryButton({ categoryId, categoryName, productCount }:
     <button 
       onClick={handleDelete}
       disabled={isDeleting}
-      className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+      className="p-2 text-muted hover:text-primary transition-colors disabled:opacity-50"
       title="Usuń kategorię"
     >
       <Trash2 className={`h-4 w-4 ${isDeleting ? "animate-pulse" : ""}`} />

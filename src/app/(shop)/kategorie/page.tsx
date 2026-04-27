@@ -36,14 +36,14 @@ export default async function CategoriesPage() {
       {/* Header */}
       <div className="text-center mb-12">
         <div className="flex justify-center mb-4">
-          <div className="p-3 bg-red-100 rounded-full">
-            <Grid3X3 className="h-8 w-8 text-red-600" />
+          <div className="p-3 bg-primary/10 rounded-full">
+            <Grid3X3 className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
           Kategorie produktów
         </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <p className="text-lg text-muted max-w-2xl mx-auto">
           Odkryj bogactwo polskiego rękodzieła. Wybierz kategorię i znajdź unikalne produkty tworzone z pasją przez lokalnych artystów.
         </p>
       </div>
@@ -54,7 +54,7 @@ export default async function CategoriesPage() {
           <Link
             key={category.id}
             href={`/sklep?kategoria=${category.slug}`}
-            className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+            className="group bg-surface rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
           >
             {/* Image */}
             <div className="aspect-[4/3] bg-gradient-to-br from-red-50 to-orange-50 relative overflow-hidden">
@@ -78,17 +78,17 @@ export default async function CategoriesPage() {
             <div className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
+                  <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </h2>
-                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                  <p className="text-muted text-sm mt-2 line-clamp-2">
                     {category.description}
                   </p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                <ArrowRight className="h-5 w-5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <span className="text-sm text-gray-500">
+              <div className="mt-4 pt-4 border-t border-border">
+                <span className="text-sm text-muted">
                   {category._count.products} produktów
                 </span>
               </div>
@@ -99,15 +99,15 @@ export default async function CategoriesPage() {
 
       {/* CTA */}
       <div className="mt-16 text-center bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-8 md:p-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <h2 className="text-2xl font-bold text-foreground mb-4">
           Nie możesz się zdecydować?
         </h2>
-        <p className="text-gray-600 mb-6 max-w-lg mx-auto">
+        <p className="text-muted mb-6 max-w-lg mx-auto">
           Przeglądaj wszystkie produkty i odkryj coś wyjątkowego dla siebie lub na prezent.
         </p>
         <Link
           href="/sklep"
-          className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
+          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors"
         >
           Zobacz wszystkie produkty
           <ArrowRight className="h-4 w-4" />

@@ -1,30 +1,44 @@
 @import "tailwindcss";
 
-/* CraftRoni - Globalne style */
+/* CraftRoni — globalne style. Style guide: docs/UI_STYLE_GUIDE.md */
 
 :root {
-  /* Kolory marki - czerwień */
-  --color-primary: #dc2626;
-  --color-primary-dark: #b91c1c;
-  --color-primary-light: #ef4444;
-  
+  /* Brand */
+  --color-primary: #e60000;        /* CraftRoni Red */
+  --color-primary-dark: #8b0000;   /* Deep Maroon — hover/akcenty */
+
   /* Neutralne */
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-background: #f9f7f2;     /* Off-White — tło globalne */
+  --color-foreground: #2d2d2d;     /* Charcoal — tekst */
+  --color-surface: #ffffff;        /* Tło kart, modali, formularzy */
+  --color-border: #e5e0d6;         /* Delikatna ramka spójna z off-white */
+  --color-muted: #6b6b6b;          /* Tekst drugorzędny */
 }
 
+/* Mapowanie tokenów na utility Tailwind 4 (bg-primary, text-foreground, font-serif itd.) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-muted: var(--color-muted);
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
-/* CraftRoni nie używa dark mode - zawsze jasny motyw */
+/* CraftRoni nie używa dark mode — zawsze jasny motyw */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Nagłówki — zawsze serif (Playfair) */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
 /* Smooth scrolling */
@@ -32,28 +46,28 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar w kolorze marki */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #dc2626;
+  background: var(--color-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b91c1c;
+  background: var(--color-primary-dark);
 }
 
 /* Focus visible dla dostępności */
 *:focus-visible {
-  outline: 2px solid #dc2626;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -73,13 +87,13 @@ html {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Skeleton loader */
+/* Skeleton loader — odcienie pasujące do off-white tła */
 .skeleton {
   background: linear-gradient(
     90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
+    #efeae0 25%,
+    #e3ddcf 50%,
+    #efeae0 75%
   );
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;

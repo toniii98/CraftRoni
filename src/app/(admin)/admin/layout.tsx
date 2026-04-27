@@ -27,16 +27,16 @@ export default async function AdminLayout({
   const session = await getSession();
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-background">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-foreground text-white">
         {/* Logo */}
-        <div className="p-6 border-b border-gray-800">
-          <Link href="/admin" className="text-xl font-bold text-red-500">
+        <div className="p-6 border-b border-white/10">
+          <Link href="/admin" className="font-serif text-xl font-bold text-primary">
             CraftRoni Admin
           </Link>
           {session && (
-            <p className="text-xs text-gray-400 mt-1 truncate">
+            <p className="text-xs text-white/60 mt-1 truncate">
               {session.email}
             </p>
           )}
@@ -49,7 +49,7 @@ export default async function AdminLayout({
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 text-white/75 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                 >
                   <item.icon className="h-5 w-5" />
                   {item.name}
@@ -60,10 +60,10 @@ export default async function AdminLayout({
         </nav>
 
         {/* Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 space-y-2">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 space-y-2">
           <Link
             href="/"
-            className="flex items-center gap-3 px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex items-center gap-3 px-4 py-3 text-white/75 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
           >
             <Store className="h-5 w-5" />
             Wróć do sklepu

@@ -12,7 +12,7 @@ export function ProductGrid({ products, emptyMessage = "Brak produktów" }: Prod
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">{emptyMessage}</p>
+        <p className="text-muted">{emptyMessage}</p>
       </div>
     );
   }

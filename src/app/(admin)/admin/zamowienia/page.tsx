@@ -16,7 +16,7 @@ function StatusBadge({ status }: { status: string }) {
     PROCESSING: { label: "W realizacji", className: "bg-purple-100 text-purple-800", icon: Package },
     SHIPPED: { label: "Wysłane", className: "bg-indigo-100 text-indigo-800", icon: Truck },
     DELIVERED: { label: "Dostarczone", className: "bg-green-100 text-green-800", icon: CheckCircle },
-    CANCELLED: { label: "Anulowane", className: "bg-red-100 text-red-800", icon: XCircle },
+    CANCELLED: { label: "Anulowane", className: "bg-primary/10 text-primary-dark", icon: XCircle },
   };
 
   const config = statusConfig[status] || statusConfig.PENDING;
@@ -128,8 +128,8 @@ export default async function AdminOrdersPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Zamówienia</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Zamówienia</h1>
+          <p className="text-muted mt-1">
             Zarządzaj zamówieniami klientów ({totalCount} zamówień)
           </p>
         </div>
@@ -139,7 +139,7 @@ export default async function AdminOrdersPage({
           <select 
             name="status"
             defaultValue={params.status || "all"}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Wszystkie statusy</option>
             <option value="PENDING">Oczekujące</option>
@@ -154,11 +154,11 @@ export default async function AdminOrdersPage({
             name="search"
             defaultValue={params.search || ""}
             placeholder="Szukaj zamówień..."
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors"
           >
             Filtruj
           </button>
@@ -204,10 +204,10 @@ export default async function AdminOrdersPage({
         </Link>
         <Link 
           href={buildUrl({ status: "CANCELLED", page: undefined })}
-          className={`rounded-lg p-4 transition-colors ${params.status === "CANCELLED" ? "ring-2 ring-red-500" : ""} bg-red-50 hover:bg-red-100`}
+          className={`rounded-lg p-4 transition-colors ${params.status === "CANCELLED" ? "ring-2 ring-red-500" : ""} bg-primary/5 hover:bg-primary/10`}
         >
-          <p className="text-red-600 text-sm font-medium">Anulowane</p>
-          <p className="text-2xl font-bold text-red-700 mt-1">{statusCounts.CANCELLED}</p>
+          <p className="text-primary text-sm font-medium">Anulowane</p>
+          <p className="text-2xl font-bold text-primary-dark mt-1">{statusCounts.CANCELLED}</p>
         </Link>
       </div>
 
@@ -216,7 +216,7 @@ export default async function AdminOrdersPage({
         <div className="mb-4">
           <Link
             href="/admin/zamowienia"
-            className="text-sm text-red-600 hover:text-red-700"
+            className="text-sm text-primary hover:text-primary-dark"
           >
             ← Wyczyść filtry
           </Link>
@@ -224,12 +224,12 @@ export default async function AdminOrdersPage({
       )}
 
       {/* Orders table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border overflow-hidden">
         {orders.length === 0 ? (
           <div className="p-12 text-center">
-            <ShoppingBag className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zamówień</h3>
-            <p className="text-gray-500">
+            <ShoppingBag className="h-12 w-12 text-muted/40 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Brak zamówień</h3>
+            <p className="text-muted">
               {params.status || params.search
                 ? "Nie znaleziono zamówień spełniających kryteria."
                 : "Nie masz jeszcze żadnych zamówień."}
@@ -240,60 +240,60 @@ export default async function AdminOrdersPage({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-600">
+                  <tr className="bg-background border-b border-border">
+                    <th className="text-left px-6 py-4 text-sm font-medium text-muted">
                       Zamówienie
                     </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-left px-6 py-4 text-sm font-medium text-muted">
                       Klient
                     </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-left px-6 py-4 text-sm font-medium text-muted">
                       Status
                     </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-left px-6 py-4 text-sm font-medium text-muted">
                       Produkty
                     </th>
-                    <th className="text-right px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-right px-6 py-4 text-sm font-medium text-muted">
                       Wartość
                     </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-left px-6 py-4 text-sm font-medium text-muted">
                       Data
                     </th>
-                    <th className="text-right px-6 py-4 text-sm font-medium text-gray-600">
+                    <th className="text-right px-6 py-4 text-sm font-medium text-muted">
                       Akcje
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr key={order.id} className="hover:bg-background">
                       <td className="px-6 py-4">
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-foreground">
                           {order.orderNumber}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-gray-900">{order.customerName}</p>
-                          <p className="text-sm text-gray-500">{order.customerEmail}</p>
+                          <p className="text-foreground">{order.customerName}</p>
+                          <p className="text-sm text-muted">{order.customerEmail}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-6 py-4 text-muted">
                         {order._count.items} szt.
                       </td>
-                      <td className="px-6 py-4 text-right font-medium text-gray-900">
+                      <td className="px-6 py-4 text-right font-medium text-foreground">
                         {formatPrice(Number(order.total))}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-muted">
                         {formatDate(order.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link
                           href={`/admin/zamowienia/${order.id}`}
-                          className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary-dark text-sm font-medium"
                         >
                           <Eye className="h-4 w-4" />
                           Szczegóły
@@ -306,15 +306,15 @@ export default async function AdminOrdersPage({
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+              <p className="text-sm text-muted">
                 Wyświetlono {offset + 1}-{Math.min(offset + limit, totalCount)} z {totalCount} zamówień
               </p>
               <div className="flex gap-2">
                 {page > 1 && (
                   <Link
                     href={buildUrl({ page: String(page - 1) })}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-3 py-1 text-sm border border-border rounded-lg hover:bg-background"
                   >
                     Poprzednia
                   </Link>
@@ -322,7 +322,7 @@ export default async function AdminOrdersPage({
                 {page < totalPages && (
                   <Link
                     href={buildUrl({ page: String(page + 1) })}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-3 py-1 text-sm border border-border rounded-lg hover:bg-background"
                   >
                     Następna
                   </Link>

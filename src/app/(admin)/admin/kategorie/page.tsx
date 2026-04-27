@@ -24,8 +24,8 @@ export default async function AdminCategoriesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kategorie</h1>
-          <p className="text-gray-600">Zarządzaj kategoriami produktów ({categories.length} kategorii)</p>
+          <h1 className="text-2xl font-bold text-foreground">Kategorie</h1>
+          <p className="text-muted">Zarządzaj kategoriami produktów ({categories.length} kategorii)</p>
         </div>
         <Link href="/admin/kategorie/nowa">
           <Button>
@@ -35,12 +35,12 @@ export default async function AdminCategoriesPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
         {categories.length === 0 ? (
           <div className="p-12 text-center">
-            <FolderOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak kategorii</h3>
-            <p className="text-gray-500 mb-4">Nie masz jeszcze żadnych kategorii.</p>
+            <FolderOpen className="h-12 w-12 text-muted/40 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Brak kategorii</h3>
+            <p className="text-muted mb-4">Nie masz jeszcze żadnych kategorii.</p>
             <Link href="/admin/kategorie/nowa">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -50,31 +50,31 @@ export default async function AdminCategoriesPage() {
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Kategoria
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Slug
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Produkty
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
                   Akcje
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {categories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-50">
+                <tr key={category.id} className="hover:bg-background">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-10 h-10 bg-background rounded-lg flex items-center justify-center overflow-hidden">
                         {category.image ? (
                           <img 
                             src={category.image} 
@@ -82,36 +82,36 @@ export default async function AdminCategoriesPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <FolderOpen className="h-5 w-5 text-gray-400" />
+                          <FolderOpen className="h-5 w-5 text-muted" />
                         )}
                       </div>
                       <div>
-                        <span className="font-medium text-gray-900 block">
+                        <span className="font-medium text-foreground block">
                           {category.name}
                         </span>
                         {category.description && (
-                          <span className="text-sm text-gray-500 line-clamp-1">
+                          <span className="text-sm text-muted line-clamp-1">
                             {category.description}
                           </span>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600 font-mono text-sm">
+                  <td className="px-6 py-4 text-muted font-mono text-sm">
                     {category.slug}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-gray-900 font-medium">
+                    <span className="text-foreground font-medium">
                       {category._count.products}
                     </span>
-                    <span className="text-gray-500"> produktów</span>
+                    <span className="text-muted"> produktów</span>
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         category.isActive
                           ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
+                          : "bg-background text-foreground"
                       }`}
                     >
                       {category.isActive ? "Aktywna" : "Nieaktywna"}
@@ -121,7 +121,7 @@ export default async function AdminCategoriesPage() {
                     <div className="flex items-center justify-end gap-2">
                       <Link 
                         href={`/admin/kategorie/${category.id}/edytuj`}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 text-muted hover:text-foreground transition-colors"
                       >
                         <Edit className="h-4 w-4" />
                       </Link>

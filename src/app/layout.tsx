@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { siteConfig } from "@/lib/config";
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${montserrat.variable} ${playfair.variable} font-sans antialiased`}>
         <CartProvider>
           <div className="flex min-h-screen flex-col">
             <Header />

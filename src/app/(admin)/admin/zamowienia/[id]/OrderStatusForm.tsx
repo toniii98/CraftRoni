@@ -63,14 +63,14 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="status" className="block text-sm font-medium text-foreground mb-1">
           Nowy status
         </label>
         <select
           id="status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+          className="w-full px-3 py-2 border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
         >
           {statuses.map((s) => (
             <option key={s.value} value={s.value}>
@@ -81,7 +81,7 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
       </div>
 
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="notes" className="block text-sm font-medium text-foreground mb-1">
           Dodaj notatkę (opcjonalnie)
         </label>
         <textarea
@@ -90,7 +90,7 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
           onChange={(e) => setNotes(e.target.value)}
           placeholder="np. Numer przesyłki..."
           rows={3}
-          className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+          className="w-full px-3 py-2 border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary resize-none"
         />
       </div>
 
@@ -99,7 +99,7 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
           className={`p-3 rounded-lg text-sm ${
             message.type === "success"
               ? "bg-green-50 text-green-700"
-              : "bg-red-50 text-red-700"
+              : "bg-primary/5 text-primary-dark"
           }`}
         >
           {message.text}
@@ -109,7 +109,7 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
       <button
         type="submit"
         disabled={loading || status === currentStatus}
-        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {loading ? (
           <>

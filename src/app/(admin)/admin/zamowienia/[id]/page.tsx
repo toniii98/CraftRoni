@@ -33,7 +33,7 @@ function StatusBadge({ status }: { status: string }) {
     PROCESSING: { label: "W realizacji", className: "bg-purple-100 text-purple-800", icon: Package },
     SHIPPED: { label: "Wysłane", className: "bg-indigo-100 text-indigo-800", icon: Truck },
     DELIVERED: { label: "Dostarczone", className: "bg-green-100 text-green-800", icon: CheckCircle },
-    CANCELLED: { label: "Anulowane", className: "bg-red-100 text-red-800", icon: XCircle },
+    CANCELLED: { label: "Anulowane", className: "bg-primary/10 text-primary-dark", icon: XCircle },
   };
 
   const config = statusConfig[status] || statusConfig.PENDING;
@@ -112,7 +112,7 @@ export default async function OrderDetailPage({
       <div className="mb-6">
         <Link
           href="/admin/zamowienia"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center gap-2 text-muted hover:text-foreground mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
           Powrót do zamówień
@@ -120,11 +120,11 @@ export default async function OrderDetailPage({
         
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <ShoppingBag className="h-6 w-6 text-red-600" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+              <ShoppingBag className="h-6 w-6 text-primary" />
               Zamówienie {order.orderNumber}
             </h1>
-            <p className="text-gray-500 mt-1 flex items-center gap-2">
+            <p className="text-muted mt-1 flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               {formatDate(order.createdAt)}
             </p>
@@ -137,17 +137,17 @@ export default async function OrderDetailPage({
         {/* Left Column - Order Items & Summary */}
         <div className="lg:col-span-2 space-y-6">
           {/* Order Items */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Package className="h-5 w-5 text-gray-500" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <Package className="h-5 w-5 text-muted" />
                 Produkty ({orderItems.length})
               </h2>
             </div>
             <div className="divide-y">
               {orderItems.map((item) => (
                 <div key={item.id} className="px-6 py-4 flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="w-16 h-16 bg-background rounded-lg overflow-hidden flex-shrink-0">
                     {item.image ? (
                       <img
                         src={item.image}
@@ -155,7 +155,7 @@ export default async function OrderDetailPage({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center text-muted">
                         <Package className="h-6 w-6" />
                       </div>
                     )}
@@ -164,54 +164,54 @@ export default async function OrderDetailPage({
                     {item.productSlug ? (
                       <Link
                         href={`/produkt/${item.productSlug}`}
-                        className="font-medium text-gray-900 hover:text-red-600"
+                        className="font-medium text-foreground hover:text-primary"
                       >
                         {item.name}
                       </Link>
                     ) : (
-                      <span className="font-medium text-gray-900">{item.name}</span>
+                      <span className="font-medium text-foreground">{item.name}</span>
                     )}
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted">
                       Ilość: {item.quantity} × {formatPrice(item.price)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-foreground">
                       {formatPrice(item.price * item.quantity)}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="px-6 py-4 bg-gray-50 border-t space-y-2">
+            <div className="px-6 py-4 bg-background border-t space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Suma produktów</span>
-                <span className="text-gray-900">{formatPrice(Number(order.subtotal))}</span>
+                <span className="text-muted">Suma produktów</span>
+                <span className="text-foreground">{formatPrice(Number(order.subtotal))}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Dostawa</span>
-                <span className="text-gray-900">
+                <span className="text-muted">Dostawa</span>
+                <span className="text-foreground">
                   {Number(order.shippingCost) === 0 ? "Gratis" : formatPrice(Number(order.shippingCost))}
                 </span>
               </div>
               <div className="flex justify-between text-lg font-semibold pt-2 border-t">
-                <span className="text-gray-900">Razem</span>
-                <span className="text-red-600">{formatPrice(Number(order.total))}</span>
+                <span className="text-foreground">Razem</span>
+                <span className="text-primary">{formatPrice(Number(order.total))}</span>
               </div>
             </div>
           </div>
 
           {/* Notes */}
           {order.notes && (
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-surface rounded-lg shadow-sm border">
               <div className="px-6 py-4 border-b">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-gray-500" />
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-muted" />
                   Notatki
                 </h2>
               </div>
               <div className="px-6 py-4">
-                <p className="text-gray-700 whitespace-pre-wrap">{order.notes}</p>
+                <p className="text-foreground whitespace-pre-wrap">{order.notes}</p>
               </div>
             </div>
           )}
@@ -220,33 +220,33 @@ export default async function OrderDetailPage({
         {/* Right Column - Customer Info & Status */}
         <div className="space-y-6">
           {/* Customer Info */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <User className="h-5 w-5 text-gray-500" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <User className="h-5 w-5 text-muted" />
                 Dane klienta
               </h2>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Imię i nazwisko</p>
-                <p className="font-medium text-gray-900">{order.customerName}</p>
+                <p className="text-sm text-muted">Imię i nazwisko</p>
+                <p className="font-medium text-foreground">{order.customerName}</p>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-400" />
+                <Mail className="h-4 w-4 text-muted" />
                 <a 
                   href={`mailto:${order.customerEmail}`}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-primary hover:text-primary-dark"
                 >
                   {order.customerEmail}
                 </a>
               </div>
               {order.customerPhone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
+                  <Phone className="h-4 w-4 text-muted" />
                   <a 
                     href={`tel:${order.customerPhone}`}
-                    className="text-gray-900 hover:text-red-600"
+                    className="text-foreground hover:text-primary"
                   >
                     {order.customerPhone}
                   </a>
@@ -254,65 +254,65 @@ export default async function OrderDetailPage({
               )}
               {order.user && (
                 <div className="pt-2 border-t">
-                  <p className="text-xs text-gray-500">Zarejestrowany klient</p>
-                  <p className="text-sm text-gray-700">{order.user.name || order.user.email}</p>
+                  <p className="text-xs text-muted">Zarejestrowany klient</p>
+                  <p className="text-sm text-foreground">{order.user.name || order.user.email}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Shipping Address */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-gray-500" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-muted" />
                 Adres dostawy
               </h2>
             </div>
             <div className="px-6 py-4">
-              <p className="text-gray-900 font-medium">{order.customerName}</p>
-              <p className="text-gray-700">{order.shippingAddress}</p>
-              <p className="text-gray-700">
+              <p className="text-foreground font-medium">{order.customerName}</p>
+              <p className="text-foreground">{order.shippingAddress}</p>
+              <p className="text-foreground">
                 {order.shippingZip} {order.shippingCity}
               </p>
             </div>
           </div>
 
           {/* Payment Info */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-gray-500" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-muted" />
                 Płatność
               </h2>
             </div>
             <div className="px-6 py-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Metoda</span>
-                <span className="text-gray-900">
+                <span className="text-muted">Metoda</span>
+                <span className="text-foreground">
                   {order.paymentMethod || "Przy odbiorze"}
                 </span>
               </div>
               {order.paymentId && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">ID płatności</span>
-                  <span className="text-gray-900 font-mono text-xs">{order.paymentId}</span>
+                  <span className="text-muted">ID płatności</span>
+                  <span className="text-foreground font-mono text-xs">{order.paymentId}</span>
                 </div>
               )}
               {order.paidAt && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Data płatności</span>
-                  <span className="text-gray-900">{formatDate(order.paidAt)}</span>
+                  <span className="text-muted">Data płatności</span>
+                  <span className="text-foreground">{formatDate(order.paidAt)}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Status Update */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-gray-500" />
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <Truck className="h-5 w-5 text-muted" />
                 Zmień status
               </h2>
             </div>

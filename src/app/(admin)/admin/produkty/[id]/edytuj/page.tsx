@@ -150,7 +150,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   if (isFetching) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -160,28 +160,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       <div className="mb-8">
         <Link 
           href="/admin/produkty" 
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center text-muted hover:text-foreground mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Powrót do produktów
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Edytuj produkt</h1>
-        <p className="text-gray-600">Zaktualizuj informacje o produkcie</p>
+        <h1 className="text-2xl font-bold text-foreground">Edytuj produkt</h1>
+        <p className="text-muted">Zaktualizuj informacje o produkcie</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+        <div className="bg-primary/5 border border-primary/20 text-primary-dark px-4 py-3 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Podstawowe informacje</h2>
+        <div className="bg-surface rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Podstawowe informacje</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Nazwa produktu *
               </label>
               <input
@@ -190,13 +190,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 value={formData.name}
                 onChange={handleNameChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="np. Kolczyki z bursztynem"
               />
             </div>
 
             <div>
-              <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="slug" className="block text-sm font-medium text-foreground mb-1">
                 Slug (URL) *
               </label>
               <input
@@ -205,13 +205,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 value={formData.slug}
                 onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="np. kolczyki-z-bursztynem"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
                 Opis produktu
               </label>
               <textarea
@@ -219,13 +219,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Opisz produkt..."
               />
             </div>
 
             <div>
-              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="categoryId" className="block text-sm font-medium text-foreground mb-1">
                 Kategoria *
               </label>
               <select
@@ -233,7 +233,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 value={formData.categoryId}
                 onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Wybierz kategorię</option>
                 {categories.map((cat) => (
@@ -243,7 +243,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div>
-              <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="sku" className="block text-sm font-medium text-foreground mb-1">
                 SKU (kod produktu)
               </label>
               <input
@@ -251,19 +251,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 id="sku"
                 value={formData.sku}
                 onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="np. KOLC-BURSZ-001"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Cena i dostępność</h2>
+        <div className="bg-surface rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Cena i dostępność</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="price" className="block text-sm font-medium text-foreground mb-1">
                 Cena (zł) *
               </label>
               <input
@@ -274,13 +274,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 required
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0.00"
               />
             </div>
 
             <div>
-              <label htmlFor="salePrice" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="salePrice" className="block text-sm font-medium text-foreground mb-1">
                 Cena promocyjna (zł)
               </label>
               <input
@@ -290,13 +290,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setFormData(prev => ({ ...prev, salePrice: e.target.value }))}
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0.00"
               />
             </div>
 
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="stock" className="block text-sm font-medium text-foreground mb-1">
                 Stan magazynowy *
               </label>
               <input
@@ -306,15 +306,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
                 required
                 min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Ustawienia</h2>
+        <div className="bg-surface rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Ustawienia</h2>
           
           <div className="space-y-4">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -322,11 +322,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
               />
               <div>
-                <span className="font-medium text-gray-900">Aktywny</span>
-                <p className="text-sm text-gray-500">Produkt będzie widoczny w sklepie</p>
+                <span className="font-medium text-foreground">Aktywny</span>
+                <p className="text-sm text-muted">Produkt będzie widoczny w sklepie</p>
               </div>
             </label>
 
@@ -335,11 +335,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 type="checkbox"
                 checked={formData.isFeatured}
                 onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
-                className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
               />
               <div>
-                <span className="font-medium text-gray-900">Wyróżniony</span>
-                <p className="text-sm text-gray-500">Produkt będzie wyświetlany na stronie głównej</p>
+                <span className="font-medium text-foreground">Wyróżniony</span>
+                <p className="text-sm text-muted">Produkt będzie wyświetlany na stronie głównej</p>
               </div>
             </label>
           </div>
@@ -348,7 +348,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         <div className="flex items-center justify-end gap-4">
           <Link 
             href="/admin/produkty"
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-border rounded-lg text-foreground hover:bg-background transition-colors"
           >
             Anuluj
           </Link>

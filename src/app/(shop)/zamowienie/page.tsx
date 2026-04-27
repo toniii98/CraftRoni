@@ -123,11 +123,11 @@ export default function CheckoutPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
-          <ShoppingCart className="mx-auto h-16 w-16 text-gray-300 mb-6" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <ShoppingCart className="mx-auto h-16 w-16 text-muted/40 mb-6" />
+          <h1 className="text-2xl font-bold text-foreground mb-4">
             Twój koszyk jest pusty
           </h1>
-          <p className="text-gray-600 mb-8">
+          <p className="text-muted mb-8">
             Dodaj produkty do koszyka, aby kontynuować
           </p>
           <Link href="/sklep">
@@ -142,21 +142,21 @@ export default function CheckoutPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link
         href="/koszyk"
-        className="inline-flex items-center text-gray-600 hover:text-red-600 mb-6"
+        className="inline-flex items-center text-muted hover:text-primary mb-6"
       >
         <ChevronLeft className="h-4 w-4 mr-1" />
         Wróć do koszyka
       </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Zamówienie</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-8">Zamówienie</h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2 space-y-8">
             {/* Contact */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
                 Dane kontaktowe
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
@@ -191,8 +191,8 @@ export default function CheckoutPage() {
             </div>
 
             {/* Shipping */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
                 Adres dostawy
               </h2>
               <div className="space-y-4">
@@ -226,8 +226,8 @@ export default function CheckoutPage() {
             </div>
 
             {/* Notes */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
                 Uwagi do zamówienia
               </h2>
               <textarea
@@ -235,7 +235,7 @@ export default function CheckoutPage() {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Dodatkowe informacje..."
               />
             </div>
@@ -243,8 +243,8 @@ export default function CheckoutPage() {
 
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-50 rounded-xl p-6 sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            <div className="bg-background rounded-xl p-6 sticky top-24">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
                 Podsumowanie
               </h2>
 
@@ -252,14 +252,14 @@ export default function CheckoutPage() {
               <div className="space-y-4 mb-6">
                 {cart.items.map((item) => (
                   <div key={item.productId} className="flex gap-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">[IMG]</span>
+                    <div className="w-16 h-16 bg-background rounded-lg flex-shrink-0 flex items-center justify-center">
+                      <span className="text-muted text-xs">[IMG]</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
+                      <p className="font-medium text-foreground truncate">
                         {item.product.name}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted">
                         {item.quantity} × {formatPrice(item.product.salePrice || item.product.price)}
                       </p>
                     </div>
@@ -267,16 +267,16 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <hr className="border-gray-200 mb-4" />
+              <hr className="border-border mb-4" />
 
               {/* Totals */}
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Produkty</span>
+                  <span className="text-muted">Produkty</span>
                   <span className="font-medium">{formatPrice(cart.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Dostawa</span>
+                  <span className="text-muted">Dostawa</span>
                   <span className="font-medium">
                     {cart.shippingCost === 0 ? (
                       <span className="text-green-600">Darmowa!</span>
@@ -285,10 +285,10 @@ export default function CheckoutPage() {
                     )}
                   </span>
                 </div>
-                <hr className="border-gray-200" />
+                <hr className="border-border" />
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold">Razem</span>
-                  <span className="font-bold text-red-600">
+                  <span className="font-bold text-primary">
                     {formatPrice(cart.total)}
                   </span>
                 </div>
@@ -305,7 +305,7 @@ export default function CheckoutPage() {
                 Przejdź do płatności
               </Button>
 
-              <p className="text-xs text-gray-500 text-center mt-4">
+              <p className="text-xs text-muted text-center mt-4">
                 Płatności obsługiwane przez Przelewy24.
                 <br />
                 Akceptujemy BLIK, karty i przelewy.

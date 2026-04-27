@@ -22,36 +22,36 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
           <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl font-bold text-foreground mb-4">
           Dziękujemy za zamówienie!
         </h1>
 
-        <p className="text-gray-600 mb-2">
+        <p className="text-muted mb-2">
           Twoje zamówienie zostało przyjęte do realizacji.
         </p>
 
-        <p className="text-lg font-medium text-gray-900 mb-8">
+        <p className="text-lg font-medium text-foreground mb-8">
           Numer zamówienia:{" "}
-          <span className="font-mono text-red-600">{orderNumber}</span>
+          <span className="font-mono text-primary">{orderNumber}</span>
         </p>
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-8 text-left">
-          <h2 className="font-semibold text-gray-900 mb-4">Co dalej?</h2>
+        <div className="bg-background rounded-xl p-6 mb-8 text-left">
+          <h2 className="font-semibold text-foreground mb-4">Co dalej?</h2>
           <ul className="space-y-4">
             <li className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-red-600 mt-0.5" />
+              <Mail className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <p className="font-medium text-gray-900">Potwierdzenie email</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Potwierdzenie email</p>
+                <p className="text-sm text-muted">
                   Wysłaliśmy potwierdzenie na Twój adres email
                 </p>
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <Package className="h-5 w-5 text-red-600 mt-0.5" />
+              <Package className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <p className="font-medium text-gray-900">Realizacja zamówienia</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Realizacja zamówienia</p>
+                <p className="text-sm text-muted">
                   Przygotujemy Twoje zamówienie w ciągu 1-3 dni roboczych
                 </p>
               </div>

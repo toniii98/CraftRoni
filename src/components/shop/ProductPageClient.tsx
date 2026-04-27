@@ -36,26 +36,26 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
-        <Link href="/" className="hover:text-red-600">Strona główna</Link>
+      <nav className="flex items-center gap-2 text-sm text-muted mb-8">
+        <Link href="/" className="hover:text-primary">Strona główna</Link>
         <span>/</span>
-        <Link href="/sklep" className="hover:text-red-600">Sklep</Link>
+        <Link href="/sklep" className="hover:text-primary">Sklep</Link>
         {product.category && (
           <>
             <span>/</span>
-            <Link href={`/sklep?category=${product.category.slug}`} className="hover:text-red-600">
+            <Link href={`/sklep?category=${product.category.slug}`} className="hover:text-primary">
               {product.category.name}
             </Link>
           </>
         )}
         <span>/</span>
-        <span className="text-gray-900">{product.name}</span>
+        <span className="text-foreground">{product.name}</span>
       </nav>
 
       {/* Back link */}
       <Link
         href="/sklep"
-        className="inline-flex items-center text-gray-600 hover:text-red-600 mb-6"
+        className="inline-flex items-center text-muted hover:text-primary mb-6"
       >
         <ChevronLeft className="h-4 w-4 mr-1" />
         Wróć do sklepu
@@ -66,7 +66,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         {/* Images */}
         <div className="space-y-4">
           {/* Main image */}
-          <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden">
+          <div className="relative aspect-square bg-background rounded-xl overflow-hidden">
             {images[selectedImage]?.url ? (
               <Image
                 src={images[selectedImage].url}
@@ -76,7 +76,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                 priority
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              <div className="absolute inset-0 flex items-center justify-center text-muted">
                 <span>[Brak zdjęcia produktu]</span>
               </div>
             )}
@@ -84,7 +84,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             {/* Discount badge */}
             {hasDiscount && (
               <div className="absolute top-4 left-4">
-                <span className="bg-red-600 text-white text-sm font-medium px-3 py-1 rounded">
+                <span className="bg-primary text-white text-sm font-medium px-3 py-1 rounded">
                   -{discountPercent}%
                 </span>
               </div>
@@ -99,7 +99,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                   key={image.id}
                   onClick={() => setSelectedImage(index)}
                   className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 ${
-                    selectedImage === index ? "border-red-600" : "border-gray-200"
+                    selectedImage === index ? "border-primary" : "border-border"
                   }`}
                 >
                   {image.url ? (
@@ -110,7 +110,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-100" />
+                    <div className="w-full h-full bg-background" />
                   )}
                 </button>
               ))}
@@ -124,22 +124,22 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
           {product.category && (
             <Link
               href={`/sklep?category=${product.category.slug}`}
-              className="text-sm text-red-600 hover:text-red-700 uppercase tracking-wide"
+              className="text-sm text-primary hover:text-primary-dark uppercase tracking-wide"
             >
               {product.category.name}
             </Link>
           )}
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+          <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
 
           {/* Price */}
           <div className="flex items-center gap-4">
-            <span className="text-3xl font-bold text-red-600">
+            <span className="text-3xl font-bold text-primary">
               {formatPrice(product.salePrice || product.price)}
             </span>
             {hasDiscount && (
-              <span className="text-xl text-gray-400 line-through">
+              <span className="text-xl text-muted line-through">
                 {formatPrice(product.price)}
               </span>
             )}
@@ -156,8 +156,8 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               </>
             ) : (
               <>
-                <span className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-sm text-red-600">Brak w magazynie</span>
+                <span className="w-2 h-2 bg-primary rounded-full" />
+                <span className="text-sm text-primary">Brak w magazynie</span>
               </>
             )}
           </div>
@@ -165,17 +165,17 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
           {/* Description */}
           {product.description && (
             <div className="prose prose-gray max-w-none">
-              <p className="text-gray-600">{product.description}</p>
+              <p className="text-muted">{product.description}</p>
             </div>
           )}
 
           {/* Quantity selector */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">Ilość:</span>
-            <div className="flex items-center border border-gray-300 rounded-lg">
+            <span className="text-sm font-medium text-foreground">Ilość:</span>
+            <div className="flex items-center border border-border rounded-lg">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-2 hover:bg-gray-100 transition-colors"
+                className="p-2 hover:bg-background transition-colors"
                 disabled={quantity <= 1}
               >
                 <Minus className="h-4 w-4" />
@@ -183,7 +183,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               <span className="w-12 text-center font-medium">{quantity}</span>
               <button
                 onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                className="p-2 hover:bg-gray-100 transition-colors"
+                className="p-2 hover:bg-background transition-colors"
                 disabled={quantity >= product.stock}
               >
                 <Plus className="h-4 w-4" />
@@ -213,32 +213,32 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
 
           {/* SKU */}
           {product.sku && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               SKU: <span className="font-mono">{product.sku}</span>
             </p>
           )}
 
           {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border">
             <div className="flex items-center gap-3">
-              <Truck className="h-5 w-5 text-red-600" />
+              <Truck className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Darmowa dostawa</p>
-                <p className="text-xs text-gray-500">Od 200 zł</p>
+                <p className="text-sm font-medium text-foreground">Darmowa dostawa</p>
+                <p className="text-xs text-muted">Od 200 zł</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-red-600" />
+              <Shield className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Bezpieczne płatności</p>
-                <p className="text-xs text-gray-500">Przelewy24</p>
+                <p className="text-sm font-medium text-foreground">Bezpieczne płatności</p>
+                <p className="text-xs text-muted">Przelewy24</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <RotateCcw className="h-5 w-5 text-red-600" />
+              <RotateCcw className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium text-gray-900">14 dni na zwrot</p>
-                <p className="text-xs text-gray-500">Bez podania przyczyny</p>
+                <p className="text-sm font-medium text-foreground">14 dni na zwrot</p>
+                <p className="text-xs text-muted">Bez podania przyczyny</p>
               </div>
             </div>
           </div>
@@ -247,8 +247,8 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
 
       {/* Related products */}
       {relatedProducts.length > 0 && (
-        <section className="border-t border-gray-200 pt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <section className="border-t border-border pt-12">
+          <h2 className="text-2xl font-bold text-foreground mb-8">
             Podobne produkty
           </h2>
           <ProductGrid products={relatedProducts} />

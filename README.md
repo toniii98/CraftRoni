@@ -18,6 +18,7 @@
 - [Uruchomienie](#-uruchomienie)
 - [Struktura projektu](#-struktura-projektu)
 - [Roadmap](#-roadmap)
+- [UI Style Guide](docs/UI_STYLE_GUIDE.md) — paleta, typografia, komponenty
 
 ## 🎯 O projekcie
 

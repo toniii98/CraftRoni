@@ -12,8 +12,8 @@ export default function ContactPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Kontakt</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold text-foreground mb-4">Kontakt</h1>
+        <p className="text-muted max-w-2xl mx-auto">
           Masz pytania dotyczące zamówienia lub produktów? Chętnie pomożemy!
         </p>
       </div>
@@ -21,20 +21,20 @@ export default function ContactPage() {
       <div className="grid lg:grid-cols-2 gap-12">
         {/* Contact info */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-foreground mb-6">
             Dane kontaktowe
           </h2>
 
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+              <div className="p-3 bg-primary/10 text-primary rounded-lg">
                 <Mail className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Email</h3>
+                <h3 className="font-medium text-foreground">Email</h3>
                 <a
                   href={`mailto:${siteConfig.contact.email}`}
-                  className="text-gray-600 hover:text-red-600 transition-colors"
+                  className="text-muted hover:text-primary transition-colors"
                 >
                   {siteConfig.contact.email}
                 </a>
@@ -42,14 +42,14 @@ export default function ContactPage() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+              <div className="p-3 bg-primary/10 text-primary rounded-lg">
                 <Phone className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Telefon</h3>
+                <h3 className="font-medium text-foreground">Telefon</h3>
                 <a
                   href={`tel:${siteConfig.contact.phone}`}
-                  className="text-gray-600 hover:text-red-600 transition-colors"
+                  className="text-muted hover:text-primary transition-colors"
                 >
                   {siteConfig.contact.phone}
                 </a>
@@ -57,12 +57,12 @@ export default function ContactPage() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+              <div className="p-3 bg-primary/10 text-primary rounded-lg">
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Adres</h3>
-                <p className="text-gray-600">
+                <h3 className="font-medium text-foreground">Adres</h3>
+                <p className="text-muted">
                   ul. Przykładowa 123<br />
                   00-000 Warszawa<br />
                   Polska
@@ -71,12 +71,12 @@ export default function ContactPage() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+              <div className="p-3 bg-primary/10 text-primary rounded-lg">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Godziny pracy</h3>
-                <p className="text-gray-600">
+                <h3 className="font-medium text-foreground">Godziny pracy</h3>
+                <p className="text-muted">
                   Poniedziałek - Piątek: 9:00 - 17:00<br />
                   Sobota: 10:00 - 14:00<br />
                   Niedziela: zamknięte
@@ -86,14 +86,14 @@ export default function ContactPage() {
           </div>
 
           {/* Social */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="font-medium text-gray-900 mb-4">Znajdziesz nas też na:</h3>
+          <div className="mt-8 pt-8 border-t border-border">
+            <h3 className="font-medium text-foreground mb-4">Znajdziesz nas też na:</h3>
             <div className="flex gap-4">
               <a
                 href={siteConfig.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
+                className="px-4 py-2 bg-background rounded-lg text-muted hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 Instagram
               </a>
@@ -101,7 +101,7 @@ export default function ContactPage() {
                 href={siteConfig.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
+                className="px-4 py-2 bg-background rounded-lg text-muted hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 Facebook
               </a>
@@ -111,8 +111,8 @@ export default function ContactPage() {
 
         {/* Contact form */}
         <div>
-          <div className="bg-gray-50 rounded-xl p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <div className="bg-background rounded-xl p-8">
+            <h2 className="text-xl font-semibold text-foreground mb-6">
               Napisz do nas
             </h2>
 
@@ -138,14 +138,14 @@ export default function ContactPage() {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-foreground mb-1"
                 >
                   Wiadomość
                 </label>
                 <textarea
                   id="message"
                   rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-gray-400"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-muted"
                   placeholder="Twoja wiadomość..."
                   required
                 />
@@ -155,15 +155,15 @@ export default function ContactPage() {
                 <input
                   type="checkbox"
                   id="privacy"
-                  className="mt-1 rounded text-red-600 focus:ring-red-500"
+                  className="mt-1 rounded text-primary focus:ring-primary"
                   required
                 />
                 <label
                   htmlFor="privacy"
-                  className="ml-2 text-sm text-gray-600"
+                  className="ml-2 text-sm text-muted"
                 >
                   Akceptuję{" "}
-                  <a href="/prywatnosc" className="text-red-600 hover:underline">
+                  <a href="/prywatnosc" className="text-primary hover:underline">
                     politykę prywatności
                   </a>{" "}
                   i wyrażam zgodę na przetwarzanie moich danych osobowych.

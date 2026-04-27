@@ -72,8 +72,8 @@ export default async function AdminProductsPage({
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Produkty</h1>
-          <p className="text-gray-600">Zarządzaj produktami w sklepie ({totalCount} produktów)</p>
+          <h1 className="text-2xl font-bold text-foreground">Produkty</h1>
+          <p className="text-muted">Zarządzaj produktami w sklepie ({totalCount} produktów)</p>
         </div>
         <Link href="/admin/produkty/nowy">
           <Button>
@@ -84,22 +84,22 @@ export default async function AdminProductsPage({
       </div>
 
       {/* Filters */}
-      <form className="bg-white rounded-xl shadow-sm p-4 mb-6">
+      <form className="bg-surface rounded-xl shadow-sm p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
             <input
               type="text"
               name="search"
               defaultValue={params.search || ""}
               placeholder="Szukaj produktów..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <select 
             name="category"
             defaultValue={params.category || "all"}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Wszystkie kategorie</option>
             {categories.map((cat) => (
@@ -109,7 +109,7 @@ export default async function AdminProductsPage({
           <select 
             name="status"
             defaultValue={params.status || "all"}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Status: Wszystkie</option>
             <option value="active">Aktywne</option>
@@ -117,7 +117,7 @@ export default async function AdminProductsPage({
           </select>
           <button
             type="submit"
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
           >
             Filtruj
           </button>
@@ -125,12 +125,12 @@ export default async function AdminProductsPage({
       </form>
 
       {/* Products table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
         {products.length === 0 ? (
           <div className="p-12 text-center">
-            <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak produktów</h3>
-            <p className="text-gray-500 mb-4">Nie znaleziono produktów spełniających kryteria.</p>
+            <Package className="h-12 w-12 text-muted/40 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Brak produktów</h3>
+            <p className="text-muted mb-4">Nie znaleziono produktów spełniających kryteria.</p>
             <Link href="/admin/produkty/nowy">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -141,34 +141,34 @@ export default async function AdminProductsPage({
         ) : (
           <>
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Produkt
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Kategoria
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Cena
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Stan magazynowy
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
                     Akcje
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
+                  <tr key={product.id} className="hover:bg-background">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-12 h-12 bg-background rounded-lg flex items-center justify-center overflow-hidden">
                           {product.images && product.images.length > 0 ? (
                             <img 
                               src={product.images[0].url} 
@@ -176,20 +176,20 @@ export default async function AdminProductsPage({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-gray-400 text-xs">[IMG]</span>
+                            <span className="text-muted text-xs">[IMG]</span>
                           )}
                         </div>
                         <div>
-                          <span className="font-medium text-gray-900 block">
+                          <span className="font-medium text-foreground block">
                             {product.name}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted">
                             {product.slug}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-muted">
                       {product.category?.name || "—"}
                     </td>
                     <td className="px-6 py-4 font-medium">
@@ -199,7 +199,7 @@ export default async function AdminProductsPage({
                       <span
                         className={`${
                           product.stock === 0
-                            ? "text-red-600"
+                            ? "text-primary"
                             : product.stock < 5
                             ? "text-yellow-600"
                             : "text-green-600"
@@ -213,7 +213,7 @@ export default async function AdminProductsPage({
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           product.isActive
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-background text-foreground"
                         }`}
                       >
                         {product.isActive ? "Aktywny" : "Nieaktywny"}
@@ -223,7 +223,7 @@ export default async function AdminProductsPage({
                       <div className="flex items-center justify-end gap-2">
                         <Link 
                           href={`/admin/produkty/${product.id}/edytuj`}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="p-2 text-muted hover:text-foreground transition-colors"
                         >
                           <Edit className="h-4 w-4" />
                         </Link>
@@ -236,15 +236,15 @@ export default async function AdminProductsPage({
             </table>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+              <p className="text-sm text-muted">
                 Wyświetlanie {offset + 1}-{Math.min(offset + limit, totalCount)} z {totalCount} produktów
               </p>
               <div className="flex items-center gap-2">
                 {page > 1 && (
                   <Link
                     href={`/admin/produkty?page=${page - 1}${params.search ? `&search=${params.search}` : ""}${params.category ? `&category=${params.category}` : ""}${params.status ? `&status=${params.status}` : ""}`}
-                    className="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                    className="px-3 py-1 border border-border rounded text-muted hover:bg-background"
                   >
                     Poprzednia
                   </Link>
@@ -257,8 +257,8 @@ export default async function AdminProductsPage({
                       href={`/admin/produkty?page=${pageNum}${params.search ? `&search=${params.search}` : ""}${params.category ? `&category=${params.category}` : ""}${params.status ? `&status=${params.status}` : ""}`}
                       className={`px-3 py-1 rounded ${
                         page === pageNum
-                          ? "bg-red-600 text-white"
-                          : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                          ? "bg-primary text-white"
+                          : "border border-border text-muted hover:bg-background"
                       }`}
                     >
                       {pageNum}
@@ -268,7 +268,7 @@ export default async function AdminProductsPage({
                 {page < totalPages && (
                   <Link
                     href={`/admin/produkty?page=${page + 1}${params.search ? `&search=${params.search}` : ""}${params.category ? `&category=${params.category}` : ""}${params.status ? `&status=${params.status}` : ""}`}
-                    className="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                    className="px-3 py-1 border border-border rounded text-muted hover:bg-background"
                   >
                     Następna
                   </Link>
