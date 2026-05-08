@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link2 } from "lucide-react";
 
 const statuses = [
   { value: "PENDING", label: "Oczekujące" },
@@ -16,9 +16,10 @@ const statuses = [
 interface OrderStatusFormProps {
   orderId: string;
   currentStatus: string;
+  canLinkMatchedUser: boolean;
 }
 
-export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps) {
+export function OrderStatusForm({ orderId, currentStatus, canLinkMatchedUser }: OrderStatusFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [notes, setNotes] = useState("");
@@ -49,6 +50,36 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
 
       setMessage({ type: "success", text: "Status został zaktualizowany" });
       setNotes("");
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Wystąpił błąd",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkMatchedUser = async () => {
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ claimMatchedUser: true }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Wystąpił błąd");
+      }
+
+      setMessage({ type: "success", text: "Zamówienie zostało przypisane do dopasowanego konta." });
       router.refresh();
     } catch (error) {
       setMessage({
@@ -104,6 +135,18 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
         >
           {message.text}
         </div>
+      )}
+
+      {canLinkMatchedUser && (
+        <button
+          type="button"
+          onClick={handleLinkMatchedUser}
+          disabled={loading}
+          className="w-full px-4 py-2 border border-primary text-primary rounded-lg font-medium hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <Link2 className="h-4 w-4" />
+          Przypisz do dopasowanego klienta
+        </button>
       )}
 
       <button

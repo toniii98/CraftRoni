@@ -1,8 +1,8 @@
+import { AccountLinkStatus, CheckoutType, OrderStatus, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
-// GET /api/admin/orders - Lista zamówień dla admina
 export async function GET(request: NextRequest) {
   const session = await requireAdmin();
   if (!session) {
@@ -11,17 +11,26 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+    const checkoutType = searchParams.get("checkoutType");
+    const accountLinkStatus = searchParams.get("accountLinkStatus");
     const offset = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {};
+    const where: Prisma.OrderWhereInput = {};
 
     if (status && status !== "all") {
-      where.status = status;
+      where.status = status as OrderStatus;
+    }
+
+    if (checkoutType && checkoutType !== "all") {
+      where.checkoutType = checkoutType as CheckoutType;
+    }
+
+    if (accountLinkStatus && accountLinkStatus !== "all") {
+      where.accountLinkStatus = accountLinkStatus as AccountLinkStatus;
     }
 
     if (search) {
@@ -36,6 +45,8 @@ export async function GET(request: NextRequest) {
       prisma.order.findMany({
         where,
         include: {
+          user: { select: { id: true, email: true, name: true } },
+          matchedUser: { select: { id: true, email: true, name: true } },
           items: {
             include: {
               product: {
@@ -54,7 +65,6 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where }),
     ]);
 
-    // Convert Decimal to number
     const formattedOrders = orders.map((order) => ({
       ...order,
       subtotal: Number(order.subtotal),

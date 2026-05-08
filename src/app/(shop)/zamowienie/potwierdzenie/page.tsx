@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle, Package, Mail } from "lucide-react";
+import { CheckCircle, Package, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -8,12 +8,13 @@ export const metadata: Metadata = {
 };
 
 interface ConfirmationPageProps {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{ order?: string; email?: string }>;
 }
 
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
   const params = await searchParams;
   const orderNumber = params.order || "BRAK";
+  const email = params.email;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -56,6 +57,17 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
                 </p>
               </div>
             </li>
+            {email && (
+              <li className="flex items-start gap-3">
+                <UserPlus className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Załóż konto i odzyskaj zakup</p>
+                  <p className="text-sm text-muted">
+                    Jeśli utworzysz konto z adresem {email}, zamówienie będzie gotowe do przypisania w sekcji „Moje zamówienia”.
+                  </p>
+                </div>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -63,9 +75,15 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
           <Link href="/sklep">
             <Button variant="outline">Kontynuuj zakupy</Button>
           </Link>
-          <Link href="/">
-            <Button>Strona główna</Button>
-          </Link>
+          {email ? (
+            <Link href={`/konto/rejestracja?redirect=${encodeURIComponent("/konto/zamowienia")}`}>
+              <Button>Załóż konto</Button>
+            </Link>
+          ) : (
+            <Link href="/konto/zamowienia">
+              <Button>Moje zamówienia</Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>

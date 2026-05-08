@@ -1,13 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  Clock, 
-  XCircle, 
+import {
+  ArrowLeft,
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  XCircle,
   CreditCard,
   User,
   MapPin,
@@ -15,9 +15,10 @@ import {
   Mail,
   Calendar,
   FileText,
-  ShoppingBag
+  ShoppingBag,
+  Link2,
 } from "lucide-react";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { OrderStatusForm } from "./OrderStatusForm";
 
 export const metadata: Metadata = {
@@ -25,7 +26,6 @@ export const metadata: Metadata = {
   description: "Szczegóły zamówienia",
 };
 
-// Status badge component
 function StatusBadge({ status }: { status: string }) {
   const statusConfig: Record<string, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
     PENDING: { label: "Oczekujące", className: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -90,6 +90,13 @@ export default async function OrderDetailPage({
           email: true,
         },
       },
+      matchedUser: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
     },
   });
 
@@ -97,7 +104,7 @@ export default async function OrderDetailPage({
     notFound();
   }
 
-  const orderItems = order.items.map(item => ({
+  const orderItems = order.items.map((item) => ({
     id: item.id,
     name: item.name,
     quantity: item.quantity,
@@ -106,18 +113,16 @@ export default async function OrderDetailPage({
     image: item.product?.images[0]?.url || null,
   }));
 
+  const linkedCustomer = order.user || order.matchedUser;
+
   return (
     <div>
-      {/* Header */}
       <div className="mb-6">
-        <Link
-          href="/admin/zamowienia"
-          className="inline-flex items-center gap-2 text-muted hover:text-foreground mb-4"
-        >
+        <Link href="/admin/zamowienia" className="inline-flex items-center gap-2 text-muted hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
           Powrót do zamówień
         </Link>
-        
+
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
@@ -134,9 +139,7 @@ export default async function OrderDetailPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Order Items & Summary */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order Items */}
           <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -149,11 +152,8 @@ export default async function OrderDetailPage({
                 <div key={item.id} className="px-6 py-4 flex items-center gap-4">
                   <div className="w-16 h-16 bg-background rounded-lg overflow-hidden flex-shrink-0">
                     {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted">
                         <Package className="h-6 w-6" />
@@ -162,23 +162,16 @@ export default async function OrderDetailPage({
                   </div>
                   <div className="flex-1 min-w-0">
                     {item.productSlug ? (
-                      <Link
-                        href={`/produkt/${item.productSlug}`}
-                        className="font-medium text-foreground hover:text-primary"
-                      >
+                      <Link href={`/produkt/${item.productSlug}`} className="font-medium text-foreground hover:text-primary">
                         {item.name}
                       </Link>
                     ) : (
                       <span className="font-medium text-foreground">{item.name}</span>
                     )}
-                    <p className="text-sm text-muted">
-                      Ilość: {item.quantity} × {formatPrice(item.price)}
-                    </p>
+                    <p className="text-sm text-muted">Ilość: {item.quantity} × {formatPrice(item.price)}</p>
                   </div>
                   <div className="text-right">
-                    <span className="font-medium text-foreground">
-                      {formatPrice(item.price * item.quantity)}
-                    </span>
+                    <span className="font-medium text-foreground">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>
               ))}
@@ -190,9 +183,7 @@ export default async function OrderDetailPage({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Dostawa</span>
-                <span className="text-foreground">
-                  {Number(order.shippingCost) === 0 ? "Gratis" : formatPrice(Number(order.shippingCost))}
-                </span>
+                <span className="text-foreground">{Number(order.shippingCost) === 0 ? "Gratis" : formatPrice(Number(order.shippingCost))}</span>
               </div>
               <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                 <span className="text-foreground">Razem</span>
@@ -201,7 +192,6 @@ export default async function OrderDetailPage({
             </div>
           </div>
 
-          {/* Notes */}
           {order.notes && (
             <div className="bg-surface rounded-lg shadow-sm border">
               <div className="px-6 py-4 border-b">
@@ -217,9 +207,7 @@ export default async function OrderDetailPage({
           )}
         </div>
 
-        {/* Right Column - Customer Info & Status */}
         <div className="space-y-6">
-          {/* Customer Info */}
           <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -234,34 +222,27 @@ export default async function OrderDetailPage({
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted" />
-                <a 
-                  href={`mailto:${order.customerEmail}`}
-                  className="text-primary hover:text-primary-dark"
-                >
-                  {order.customerEmail}
-                </a>
+                <a href={`mailto:${order.customerEmail}`} className="text-primary hover:text-primary-dark">{order.customerEmail}</a>
               </div>
               {order.customerPhone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted" />
-                  <a 
-                    href={`tel:${order.customerPhone}`}
-                    className="text-foreground hover:text-primary"
-                  >
-                    {order.customerPhone}
-                  </a>
+                  <a href={`tel:${order.customerPhone}`} className="text-foreground hover:text-primary">{order.customerPhone}</a>
                 </div>
               )}
-              {order.user && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted">Zarejestrowany klient</p>
-                  <p className="text-sm text-foreground">{order.user.name || order.user.email}</p>
-                </div>
-              )}
+              <div className="rounded-lg bg-background p-3 text-sm space-y-2">
+                <p><strong>Typ checkoutu:</strong> {order.checkoutType === "ACCOUNT" ? "Konto" : "Gość"}</p>
+                <p><strong>Status powiązania:</strong> {order.accountLinkStatus === "LINKED" ? "Przypisane do konta" : order.accountLinkStatus === "MATCHED_BY_EMAIL" ? "Dopasowane po emailu" : "Brak powiązania"}</p>
+                {linkedCustomer && (
+                  <Link href={`/admin/klienci/${linkedCustomer.id}`} className="inline-flex items-center gap-1 text-primary hover:text-primary-dark">
+                    <Link2 className="h-4 w-4" />
+                    Zobacz historię klienta
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Shipping Address */}
           <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -272,13 +253,10 @@ export default async function OrderDetailPage({
             <div className="px-6 py-4">
               <p className="text-foreground font-medium">{order.customerName}</p>
               <p className="text-foreground">{order.shippingAddress}</p>
-              <p className="text-foreground">
-                {order.shippingZip} {order.shippingCity}
-              </p>
+              <p className="text-foreground">{order.shippingZip} {order.shippingCity}</p>
             </div>
           </div>
 
-          {/* Payment Info */}
           <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -289,9 +267,7 @@ export default async function OrderDetailPage({
             <div className="px-6 py-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Metoda</span>
-                <span className="text-foreground">
-                  {order.paymentMethod || "Przy odbiorze"}
-                </span>
+                <span className="text-foreground">{order.paymentMethod || "Przelewy24 / oczekiwanie"}</span>
               </div>
               {order.paymentId && (
                 <div className="flex justify-between text-sm">
@@ -308,7 +284,6 @@ export default async function OrderDetailPage({
             </div>
           </div>
 
-          {/* Status Update */}
           <div className="bg-surface rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
@@ -317,7 +292,7 @@ export default async function OrderDetailPage({
               </h2>
             </div>
             <div className="px-6 py-4">
-              <OrderStatusForm orderId={order.id} currentStatus={order.status} />
+              <OrderStatusForm orderId={order.id} currentStatus={order.status} canLinkMatchedUser={!order.userId && Boolean(order.matchedUserId)} />
             </div>
           </div>
         </div>
