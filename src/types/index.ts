@@ -41,11 +41,44 @@ export interface Category {
   products?: Product[];
 }
 
+export type CheckoutType = "GUEST" | "ACCOUNT";
+export type AccountLinkStatus = "NONE" | "MATCHED_BY_EMAIL" | "LINKED";
+
+export interface CustomerProfile {
+  id: string;
+  userId: string;
+  fullName: string | null;
+  phone: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Address {
+  id: string;
+  userId: string;
+  label: string | null;
+  recipientName: string;
+  phone: string | null;
+  line1: string;
+  line2: string | null;
+  city: string;
+  postalCode: string;
+  countryCode: string;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Typy dla zamówień
 export interface Order {
   id: string;
   orderNumber: string;
   userId: string | null;
+  matchedUserId: string | null;
+  checkoutType: CheckoutType;
+  accountLinkStatus: AccountLinkStatus;
+  normalizedCustomerEmail: string;
+  accessToken: string;
   status: OrderStatus;
   customerEmail: string;
   customerName: string;
@@ -75,7 +108,7 @@ export interface OrderItem {
   product?: Product;
 }
 
-export type OrderStatus = 
+export type OrderStatus =
   | "PENDING"
   | "PAID"
   | "PROCESSING"
@@ -87,8 +120,11 @@ export type OrderStatus =
 export interface User {
   id: string;
   email: string;
+  emailNormalized: string;
   name: string | null;
   role: "ADMIN" | "CUSTOMER";
+  profile?: CustomerProfile | null;
+  addresses?: Address[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +152,18 @@ export interface CheckoutFormData {
   city: string;
   zipCode: string;
   notes?: string;
+}
+
+export interface AddressFormData {
+  label?: string;
+  recipientName: string;
+  phone?: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  postalCode: string;
+  countryCode?: string;
+  isDefault?: boolean;
 }
 
 // Typy dla API response

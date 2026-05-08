@@ -20,13 +20,20 @@ export function formatPrice(price: number | string): string {
 }
 
 /**
+ * Normalizuje email do porównań i filtrowania.
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
  * Tworzy slug z tekstu
  */
 export function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Usuń polskie znaki
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 }

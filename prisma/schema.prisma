@@ -15,17 +15,21 @@ datasource db {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String?
-  role          Role      @default(CUSTOMER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  orders        Order[]
-  sessions      Session[]
-  
+  id                String           @id @default(cuid())
+  email             String           @unique
+  emailNormalized   String           @unique
+  password          String
+  name              String?
+  role              Role             @default(CUSTOMER)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  profile           CustomerProfile?
+  addresses         Address[]
+  orders            Order[]          @relation("CustomerOrders")
+  matchedGuestOrders Order[]         @relation("MatchedGuestOrders")
+  sessions          Session[]
+
   @@map("users")
 }
 
@@ -35,10 +39,44 @@ model Session {
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
-  
+
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("sessions")
+}
+
+model CustomerProfile {
+  id        String   @id @default(cuid())
+  userId     String   @unique
+  fullName   String?
+  phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customer_profiles")
+}
+
+model Address {
+  id            String   @id @default(cuid())
+  userId        String
+  label         String?
+  recipientName String
+  phone         String?
+  line1         String
+  line2         String?
+  city          String
+  postalCode    String
+  countryCode   String   @default("PL")
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
 }
 
 enum Role {
@@ -51,43 +89,43 @@ enum Role {
 // ============================================
 
 model Category {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
-  slug        String    @unique
-  description String?   @db.Text
+  slug        String     @unique
+  description String?    @db.Text
   image       String?
   parentId    String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryHierarchy")
   products    Product[]
-  
+
   @@map("categories")
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
-  slug        String   @unique
-  description String?  @db.Text
-  price       Decimal  @db.Decimal(10, 2)
-  salePrice   Decimal? @db.Decimal(10, 2)
-  sku         String?  @unique
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
+  slug        String         @unique
+  description String?        @db.Text
+  price       Decimal        @db.Decimal(10, 2)
+  salePrice   Decimal?       @db.Decimal(10, 2)
+  sku         String?        @unique
+  stock       Int            @default(0)
+  isActive    Boolean        @default(true)
+  isFeatured  Boolean        @default(false)
   categoryId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  category    Category     @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  category    Category       @relation(fields: [categoryId], references: [id])
   images      ProductImage[]
   orderItems  OrderItem[]
-  
+
   @@map("products")
 }
 
@@ -99,9 +137,9 @@ model ProductImage {
   isPrimary Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-  
+
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+
   @@map("product_images")
 }
 
@@ -110,40 +148,49 @@ model ProductImage {
 // ============================================
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  userId          String?
-  status          OrderStatus @default(PENDING)
-  
+  id                    String            @id @default(cuid())
+  orderNumber           String            @unique
+  userId                String?
+  matchedUserId         String?
+  checkoutType          CheckoutType      @default(GUEST)
+  accountLinkStatus     AccountLinkStatus @default(NONE)
+  normalizedCustomerEmail String
+  accessToken           String            @unique @default(cuid())
+  status                OrderStatus       @default(PENDING)
+
   // Dane klienta
-  customerEmail   String
-  customerName    String
-  customerPhone   String?
-  
+  customerEmail         String
+  customerName          String
+  customerPhone         String?
+
   // Adres dostawy
-  shippingAddress String      @db.Text
-  shippingCity    String
-  shippingZip     String
-  
+  shippingAddress       String            @db.Text
+  shippingCity          String
+  shippingZip           String
+
   // Kwoty
-  subtotal        Decimal     @db.Decimal(10, 2)
-  shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
-  total           Decimal     @db.Decimal(10, 2)
-  
+  subtotal              Decimal           @db.Decimal(10, 2)
+  shippingCost          Decimal           @db.Decimal(10, 2) @default(0)
+  total                 Decimal           @db.Decimal(10, 2)
+
   // Płatność
-  paymentMethod   String?
-  paymentId       String?
-  paidAt          DateTime?
-  
+  paymentMethod         String?
+  paymentId             String?
+  paidAt                DateTime?
+
   // Notatki
-  notes           String?     @db.Text
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  user            User?       @relation(fields: [userId], references: [id])
-  items           OrderItem[]
-  
+  notes                 String?           @db.Text
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  user                  User?             @relation("CustomerOrders", fields: [userId], references: [id])
+  matchedUser           User?             @relation("MatchedGuestOrders", fields: [matchedUserId], references: [id])
+  items                 OrderItem[]
+
+  @@index([userId])
+  @@index([matchedUserId])
+  @@index([normalizedCustomerEmail])
   @@map("orders")
 }
 
@@ -154,10 +201,10 @@ model OrderItem {
   quantity  Int
   price     Decimal  @db.Decimal(10, 2)
   name      String   // Snapshot nazwy produktu
-  
+
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
-  
+
   @@map("order_items")
 }
 
@@ -170,6 +217,17 @@ enum OrderStatus {
   CANCELLED    // Anulowane
 }
 
+enum CheckoutType {
+  GUEST
+  ACCOUNT
+}
+
+enum AccountLinkStatus {
+  NONE
+  MATCHED_BY_EMAIL
+  LINKED
+}
+
 // ============================================
 // USTAWIENIA SKLEPU
 // ============================================
@@ -180,6 +238,6 @@ model Setting {
   value     String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("settings")
 }

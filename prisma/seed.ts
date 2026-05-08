@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import { normalizeEmail } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
+
+const demoPasswordHash = "$2b$12$EiI8mucsA91iVT9owxaJYOd7MB4i8i12INpmEAl5lytMmfJH7EqRa"; // admin123
 
 async function main() {
   console.log("🌱 Rozpoczynam seedowanie bazy danych...\n");
@@ -9,6 +12,8 @@ async function main() {
   console.log("🗑️  Czyszczenie istniejących danych...");
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.address.deleteMany();
+  await prisma.customerProfile.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
@@ -73,7 +78,6 @@ async function main() {
   console.log("📦 Tworzenie produktów...");
 
   const products = [
-    // Biżuteria
     {
       name: "Kolczyki z bursztynem bałtyckim",
       slug: "kolczyki-bursztyn-baltycki",
@@ -101,9 +105,7 @@ async function main() {
       stock: 30,
       isFeatured: false,
       categoryId: bizuteria.id,
-      images: [
-        { url: "/images/products/bransoletka-1.jpg", alt: "Bransoletka pleciona", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/bransoletka-1.jpg", alt: "Bransoletka pleciona", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Naszyjnik z kwarcem różowym",
@@ -116,12 +118,8 @@ async function main() {
       stock: 20,
       isFeatured: true,
       categoryId: bizuteria.id,
-      images: [
-        { url: "/images/products/naszyjnik-kwarc-1.jpg", alt: "Naszyjnik z kwarcem różowym", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/naszyjnik-kwarc-1.jpg", alt: "Naszyjnik z kwarcem różowym", isPrimary: true, sortOrder: 0 }],
     },
-
-    // Ceramika
     {
       name: "Kubek ceramiczny ręcznie malowany",
       slug: "kubek-ceramiczny-malowany",
@@ -149,9 +147,7 @@ async function main() {
       stock: 10,
       isFeatured: false,
       categoryId: ceramika.id,
-      images: [
-        { url: "/images/products/miska-lisc-1.jpg", alt: "Miska ceramiczna liść", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/miska-lisc-1.jpg", alt: "Miska ceramiczna liść", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Wazon ceramiczny artystyczny",
@@ -164,12 +160,8 @@ async function main() {
       stock: 8,
       isFeatured: true,
       categoryId: ceramika.id,
-      images: [
-        { url: "/images/products/wazon-1.jpg", alt: "Wazon ceramiczny", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/wazon-1.jpg", alt: "Wazon ceramiczny", isPrimary: true, sortOrder: 0 }],
     },
-
-    // Tekstylia
     {
       name: "Poduszka dekoracyjna haftowana",
       slug: "poduszka-haftowana",
@@ -181,9 +173,7 @@ async function main() {
       stock: 20,
       isFeatured: false,
       categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/poduszka-1.jpg", alt: "Poduszka haftowana", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/poduszka-1.jpg", alt: "Poduszka haftowana", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Koc wełniany w kratę",
@@ -196,9 +186,7 @@ async function main() {
       stock: 12,
       isFeatured: true,
       categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/koc-welnany-1.jpg", alt: "Koc wełniany", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/koc-welnany-1.jpg", alt: "Koc wełniany", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Bieżnik lniany naturalny",
@@ -211,12 +199,8 @@ async function main() {
       stock: 18,
       isFeatured: false,
       categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/bieznik-1.jpg", alt: "Bieżnik lniany", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/bieznik-1.jpg", alt: "Bieżnik lniany", isPrimary: true, sortOrder: 0 }],
     },
-
-    // Drewno
     {
       name: "Deska do krojenia dębowa",
       slug: "deska-krojenia-dab",
@@ -228,9 +212,7 @@ async function main() {
       stock: 15,
       isFeatured: true,
       categoryId: drewno.id,
-      images: [
-        { url: "/images/products/deska-dab-1.jpg", alt: "Deska dębowa", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/deska-dab-1.jpg", alt: "Deska dębowa", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Szkatułka rzeźbiona",
@@ -243,9 +225,7 @@ async function main() {
       stock: 6,
       isFeatured: true,
       categoryId: drewno.id,
-      images: [
-        { url: "/images/products/szkatulka-1.jpg", alt: "Szkatułka rzeźbiona", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/szkatulka-1.jpg", alt: "Szkatułka rzeźbiona", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Łyżki drewniane zestaw",
@@ -258,12 +238,8 @@ async function main() {
       stock: 25,
       isFeatured: false,
       categoryId: drewno.id,
-      images: [
-        { url: "/images/products/lyzki-1.jpg", alt: "Łyżki drewniane", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/lyzki-1.jpg", alt: "Łyżki drewniane", isPrimary: true, sortOrder: 0 }],
     },
-
-    // Świece i aromaty
     {
       name: "Świeca sojowa - leśny mech",
       slug: "swieca-sojowa-lesny-mech",
@@ -275,9 +251,7 @@ async function main() {
       stock: 35,
       isFeatured: true,
       categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swieca-mech-1.jpg", alt: "Świeca sojowa leśny mech", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/swieca-mech-1.jpg", alt: "Świeca sojowa leśny mech", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Świeca sojowa - lawenda",
@@ -290,9 +264,7 @@ async function main() {
       stock: 30,
       isFeatured: false,
       categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swieca-lawenda-1.jpg", alt: "Świeca sojowa lawenda", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/swieca-lawenda-1.jpg", alt: "Świeca sojowa lawenda", isPrimary: true, sortOrder: 0 }],
     },
     {
       name: "Zestaw świec bożonarodzeniowych",
@@ -305,9 +277,7 @@ async function main() {
       stock: 20,
       isFeatured: true,
       categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swiece-zestaw-1.jpg", alt: "Zestaw świec świątecznych", isPrimary: true, sortOrder: 0 },
-      ],
+      images: [{ url: "/images/products/swiece-zestaw-1.jpg", alt: "Zestaw świec świątecznych", isPrimary: true, sortOrder: 0 }],
     },
   ];
 
@@ -326,19 +296,48 @@ async function main() {
 
   console.log(`   ✓ Utworzono ${products.length} produktów`);
 
-  // Tworzenie użytkownika admin
-  console.log("👤 Tworzenie użytkownika admin...");
+  console.log("👤 Tworzenie użytkowników...");
   const admin = await prisma.user.create({
     data: {
       email: "admin@craftroni.pl",
+      emailNormalized: normalizeEmail("admin@craftroni.pl"),
       name: "Administrator",
-      password: "$2b$12$EiI8mucsA91iVT9owxaJYOd7MB4i8i12INpmEAl5lytMmfJH7EqRa", // hasło: admin123
+      password: demoPasswordHash,
       role: "ADMIN",
     },
   });
-  console.log(`   ✓ Admin: ${admin.email}`);
 
-  // Tworzenie ustawień domyślnych
+  const customer = await prisma.user.create({
+    data: {
+      email: "anna@craftroni.pl",
+      emailNormalized: normalizeEmail("anna@craftroni.pl"),
+      name: "Anna Kowalska",
+      password: demoPasswordHash,
+      role: "CUSTOMER",
+      profile: {
+        create: {
+          fullName: "Anna Kowalska",
+          phone: "+48 501 234 567",
+        },
+      },
+      addresses: {
+        create: {
+          label: "Dom",
+          recipientName: "Anna Kowalska",
+          phone: "+48 501 234 567",
+          line1: "ul. Kwiatowa 15/7",
+          city: "Warszawa",
+          postalCode: "00-123",
+          countryCode: "PL",
+          isDefault: true,
+        },
+      },
+    },
+  });
+
+  console.log(`   ✓ Admin: ${admin.email}`);
+  console.log(`   ✓ Klient: ${customer.email}`);
+
   console.log("⚙️  Tworzenie ustawień...");
   await prisma.setting.createMany({
     data: [
@@ -356,10 +355,10 @@ async function main() {
   console.log("\n📊 Podsumowanie:");
   console.log(`   - Kategorii: ${categories.length}`);
   console.log(`   - Produktów: ${products.length}`);
-  console.log(`   - Użytkowników: 1 (admin)`);
-  console.log("\n🔐 Dane logowania admina:");
-  console.log("   Email: admin@craftroni.pl");
-  console.log("   Hasło: (ustaw własne hasło w panelu)");
+  console.log("   - Użytkowników: 2 (admin + klient)");
+  console.log("\n🔐 Dane logowania testowe:");
+  console.log("   Admin: admin@craftroni.pl / admin123");
+  console.log("   Klient: anna@craftroni.pl / admin123");
 }
 
 main()
