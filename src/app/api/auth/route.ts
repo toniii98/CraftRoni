@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { login, deleteSession } from "@/lib/auth";
+import { deleteSession, login } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json(
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, user: result.user });
   } catch (error) {
     console.error("Błąd logowania:", error);
     return NextResponse.json(

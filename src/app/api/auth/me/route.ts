@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getCurrentUser, getSession } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -9,12 +9,23 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
+
+    const defaultAddress = user.addresses.find((address) => address.isDefault) || user.addresses[0] || null;
+
     return NextResponse.json({
       authenticated: true,
       user: {
-        id: session.userId,
-        email: session.email,
-        role: session.role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        profile: user.profile,
+        addresses: user.addresses,
+        defaultAddress,
       },
     });
   } catch (error) {

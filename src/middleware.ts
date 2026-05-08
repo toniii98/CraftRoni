@@ -7,63 +7,64 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 const COOKIE_NAME = "craftroni-session";
-
-// Ścieżki wymagające autoryzacji admina
 const ADMIN_PATHS = ["/admin"];
-// Ścieżki publiczne w panelu admina (nie wymagają logowania)
 const PUBLIC_ADMIN_PATHS = ["/admin/login"];
+const ACCOUNT_PATHS = ["/konto"];
+const PUBLIC_ACCOUNT_PATHS = ["/konto/logowanie", "/konto/rejestracja"];
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Sprawdź czy to ścieżka admina
-  const isAdminPath = ADMIN_PATHS.some((path) => pathname.startsWith(path));
-  const isPublicAdminPath = PUBLIC_ADMIN_PATHS.some((path) => pathname === path);
-
-  // Jeśli to publiczna ścieżka admina lub nie jest to panel admina - przepuść
-  if (!isAdminPath || isPublicAdminPath) {
-    return NextResponse.next();
-  }
-
-  // Pobierz token z cookies
+async function readSession(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
 
   if (!token) {
-    // Brak tokenu - przekieruj do logowania
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return null;
   }
 
   try {
-    // Zweryfikuj token
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    
-    // Sprawdź czy użytkownik jest adminem
-    if (payload.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+    const expiresAt = new Date(payload.expiresAt as string);
+
+    if (new Date() > expiresAt) {
+      return null;
     }
 
-    // Sprawdź czy token nie wygasł
-    const expiresAt = new Date(payload.expiresAt as string);
-    if (new Date() > expiresAt) {
-      // Token wygasł - przekieruj do logowania
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  const isAdminPath = ADMIN_PATHS.some((path) => pathname.startsWith(path));
+  const isPublicAdminPath = PUBLIC_ADMIN_PATHS.some((path) => pathname === path);
+  const isAccountPath = ACCOUNT_PATHS.some((path) => pathname.startsWith(path));
+  const isPublicAccountPath = PUBLIC_ACCOUNT_PATHS.some((path) => pathname === path);
+
+  if (isAdminPath && !isPublicAdminPath) {
+    const payload = await readSession(request);
+
+    if (!payload || payload.role !== "ADMIN") {
       const response = NextResponse.redirect(new URL("/admin/login", request.url));
       response.cookies.delete(COOKIE_NAME);
       return response;
     }
-
-    // Token ważny - przepuść
-    return NextResponse.next();
-  } catch {
-    // Token nieprawidłowy - przekieruj do logowania
-    const response = NextResponse.redirect(new URL("/admin/login", request.url));
-    response.cookies.delete(COOKIE_NAME);
-    return response;
   }
+
+  if (isAccountPath && !isPublicAccountPath) {
+    const payload = await readSession(request);
+
+    if (!payload) {
+      const redirectUrl = new URL("/konto/logowanie", request.url);
+      redirectUrl.searchParams.set("redirect", `${pathname}${search}`);
+      const response = NextResponse.redirect(redirectUrl);
+      response.cookies.delete(COOKIE_NAME);
+      return response;
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    // Dopasuj wszystkie ścieżki admina
-    "/admin/:path*",
-  ],
+  matcher: ["/admin/:path*", "/konto/:path*"],
 };
