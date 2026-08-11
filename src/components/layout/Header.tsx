@@ -17,9 +17,14 @@ const navigation = [
 interface HeaderProps {
   /** Próg darmowej dostawy z ustawień sklepu. */
   freeShippingThreshold?: number;
+  /** Czy górny banner promujący darmową dostawę ma być widoczny. */
+  showFreeShippingBanner?: boolean;
 }
 
-export function Header({ freeShippingThreshold = 200 }: HeaderProps) {
+export function Header({
+  freeShippingThreshold = 200,
+  showFreeShippingBanner = true,
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { cart } = useCart();
@@ -30,9 +35,11 @@ export function Header({ freeShippingThreshold = 200 }: HeaderProps) {
   return (
     <header className="bg-surface shadow-sm sticky top-0 z-50 border-b border-border">
       {/* Top bar */}
-      <div className="bg-primary text-white text-center py-2 text-sm">
-        🎁 Darmowa dostawa od {freeShippingThreshold} zł!
-      </div>
+      {showFreeShippingBanner && (
+        <div className="bg-primary text-white text-center py-2 text-sm">
+          🎁 Darmowa dostawa od {freeShippingThreshold} zł!
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">

@@ -132,12 +132,7 @@ export default function CheckoutPage() {
       if (data.success) {
         clearCart();
         const paymentUrl: string = data.data.paymentUrl;
-        if (paymentUrl.startsWith("http")) {
-          // Zewnętrzna strona płatności (Przelewy24)
-          window.location.assign(paymentUrl);
-        } else {
-          router.push(paymentUrl);
-        }
+        router.push(paymentUrl);
       } else {
         setSubmitError(data.error || "Wystąpił błąd podczas składania zamówienia");
         setIsLoading(false);
@@ -381,7 +376,7 @@ export default function CheckoutPage() {
               </Button>
 
               <p className="text-xs text-muted text-center mt-4">
-                Płatności obsługiwane przez Przelewy24.
+                Płatności obsługiwane przez Autopay.
                 <br />
                 Akceptujemy BLIK, karty i przelewy.
               </p>

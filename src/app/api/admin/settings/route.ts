@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getShopSettings, saveShopSettings } from "@/lib/settings";
 import { settingsUpdateSchema, firstZodMessage } from "@/lib/validation";
-import { isP24Configured } from "@/lib/p24";
+import { isAutopayConfigured, isAutopaySandbox } from "@/lib/autopay";
 import { isEmailConfigured } from "@/lib/email";
 
 // GET /api/admin/settings - Ustawienia sklepu + status integracji z .env
@@ -17,8 +17,8 @@ export async function GET() {
     return NextResponse.json({
       settings,
       integrations: {
-        p24Configured: isP24Configured(),
-        p24Sandbox: process.env.P24_SANDBOX !== "false",
+        autopayConfigured: isAutopayConfigured(),
+        autopaySandbox: isAutopaySandbox(),
         emailConfigured: isEmailConfigured(),
       },
     });
@@ -46,6 +46,7 @@ export async function PUT(request: Request) {
       storeName: parsed.data.storeName,
       storeEmail: parsed.data.storeEmail,
       storePhone: parsed.data.storePhone || "",
+      showFreeShippingBanner: parsed.data.showFreeShippingBanner,
       freeShippingThreshold: parsed.data.freeShippingThreshold,
       defaultShippingCost: parsed.data.defaultShippingCost,
     });

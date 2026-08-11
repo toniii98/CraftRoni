@@ -114,6 +114,7 @@ export const settingsUpdateSchema = z.object({
   storeName: z.string().trim().min(1).max(100),
   storeEmail: z.email("Nieprawidłowy adres email").max(254),
   storePhone: z.string().trim().max(30).optional().or(emptyToNull),
+  showFreeShippingBanner: z.boolean(),
   freeShippingThreshold: z.number().min(0).max(1000000),
   defaultShippingCost: z.number().min(0).max(10000),
 });

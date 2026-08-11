@@ -1,12 +1,13 @@
 import { prisma } from "./prisma";
 
 // Ustawienia sklepu przechowywane w tabeli `settings` (klucz -> wartość).
-// Sekrety (SMTP, Przelewy24) celowo NIE trafiają do bazy — są w .env na serwerze.
+// Sekrety (SMTP, Autopay) celowo NIE trafiają do bazy — są w .env na serwerze.
 
 export interface ShopSettings {
   storeName: string;
   storeEmail: string;
   storePhone: string;
+  showFreeShippingBanner: boolean;
   freeShippingThreshold: number;
   defaultShippingCost: number;
 }
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   storeName: "CraftRoni",
   storeEmail: "kontakt@craftroni.pl",
   storePhone: "",
+  showFreeShippingBanner: true,
   freeShippingThreshold: 200,
   defaultShippingCost: 15,
 };
@@ -23,6 +25,7 @@ const DB_KEYS = {
   storeName: "store_name",
   storeEmail: "store_email",
   storePhone: "store_phone",
+  showFreeShippingBanner: "show_free_shipping_banner",
   freeShippingThreshold: "free_shipping_threshold",
   defaultShippingCost: "default_shipping_cost",
 } as const;
@@ -44,6 +47,8 @@ export async function getShopSettings(): Promise<ShopSettings> {
     storeName: byKey.get(DB_KEYS.storeName) ?? DEFAULT_SETTINGS.storeName,
     storeEmail: byKey.get(DB_KEYS.storeEmail) ?? DEFAULT_SETTINGS.storeEmail,
     storePhone: byKey.get(DB_KEYS.storePhone) ?? DEFAULT_SETTINGS.storePhone,
+    showFreeShippingBanner:
+      byKey.get(DB_KEYS.showFreeShippingBanner) !== "false",
     freeShippingThreshold: parseNumber(
       DB_KEYS.freeShippingThreshold,
       DEFAULT_SETTINGS.freeShippingThreshold
@@ -60,6 +65,7 @@ export async function saveShopSettings(settings: ShopSettings): Promise<void> {
     [DB_KEYS.storeName, settings.storeName],
     [DB_KEYS.storeEmail, settings.storeEmail],
     [DB_KEYS.storePhone, settings.storePhone],
+    [DB_KEYS.showFreeShippingBanner, String(settings.showFreeShippingBanner)],
     [DB_KEYS.freeShippingThreshold, String(settings.freeShippingThreshold)],
     [DB_KEYS.defaultShippingCost, String(settings.defaultShippingCost)],
   ];

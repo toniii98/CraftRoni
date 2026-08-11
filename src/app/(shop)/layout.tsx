@@ -19,7 +19,10 @@ export default async function ShopLayout({
       defaultShippingCost={settings.defaultShippingCost}
     >
       <div className="flex min-h-screen flex-col">
-        <Header freeShippingThreshold={settings.freeShippingThreshold} />
+        <Header
+          freeShippingThreshold={settings.freeShippingThreshold}
+          showFreeShippingBanner={settings.showFreeShippingBanner}
+        />
         <main className="flex-1">{children}</main>
         <Footer />
       </div>

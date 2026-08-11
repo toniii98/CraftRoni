@@ -114,7 +114,7 @@ export function Footer() {
             </p>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-white/50">
-                Płatności obsługuje Przelewy24
+                Płatności obsługuje Autopay
               </span>
             </div>
           </div>

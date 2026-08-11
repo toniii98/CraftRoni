@@ -231,7 +231,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               <Shield className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm font-medium text-foreground">Bezpieczne płatności</p>
-                <p className="text-xs text-muted">Przelewy24</p>
+                <p className="text-xs text-muted">Autopay</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

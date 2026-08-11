@@ -56,7 +56,7 @@ export default async function DostawaPage() {
           Płatność
         </h2>
         <ul>
-          <li>Płatności online obsługuje Przelewy24 — BLIK, szybkie przelewy, karty płatnicze.</li>
+          <li>Płatności online obsługuje Autopay — BLIK, szybkie przelewy i karty płatnicze.</li>
           <li>Płatność następuje bezpośrednio po złożeniu zamówienia.</li>
         </ul>
       </section>
