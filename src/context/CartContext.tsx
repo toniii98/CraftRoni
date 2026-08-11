@@ -11,20 +11,32 @@ interface CartContextType {
   clearCart: () => void;
   isInCart: (productId: string) => boolean;
   getItemQuantity: (productId: string) => number;
+  /** Próg darmowej dostawy (PLN) — z ustawień sklepu. */
+  freeShippingThreshold: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "craftroni-cart";
-const FREE_SHIPPING_THRESHOLD = 200;
-const DEFAULT_SHIPPING_COST = 15;
 
-function calculateCartTotals(items: CartItem[]): Cart {
+interface CartProviderProps {
+  children: ReactNode;
+  /** Próg darmowej dostawy w PLN — z ustawień sklepu (baza danych). */
+  freeShippingThreshold?: number;
+  /** Koszt dostawy w PLN — z ustawień sklepu (baza danych). */
+  defaultShippingCost?: number;
+}
+
+function calculateCartTotals(
+  items: CartItem[],
+  freeShippingThreshold: number,
+  defaultShippingCost: number
+): Cart {
   const subtotal = items.reduce(
     (sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity,
     0
   );
-  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_COST;
+  const shippingCost = subtotal >= freeShippingThreshold ? 0 : defaultShippingCost;
   const total = subtotal + shippingCost;
 
   return {
@@ -35,12 +47,16 @@ function calculateCartTotals(items: CartItem[]): Cart {
   };
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+  freeShippingThreshold = 200,
+  defaultShippingCost = 15,
+}: CartProviderProps) {
   const [cart, setCart] = useState<Cart>({
     items: [],
     subtotal: 0,
-    shippingCost: DEFAULT_SHIPPING_COST,
-    total: DEFAULT_SHIPPING_COST,
+    shippingCost: defaultShippingCost,
+    total: defaultShippingCost,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -50,12 +66,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(CART_STORAGE_KEY);
       if (stored) {
         const items: CartItem[] = JSON.parse(stored);
-        setCart(calculateCartTotals(items));
+        setCart(calculateCartTotals(items, freeShippingThreshold, defaultShippingCost));
       }
     } catch (error) {
       console.error("Błąd wczytywania koszyka:", error);
     }
     setIsLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Zapisuj koszyk do localStorage przy każdej zmianie
@@ -92,14 +109,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ];
       }
 
-      return calculateCartTotals(newItems);
+      return calculateCartTotals(newItems, freeShippingThreshold, defaultShippingCost);
     });
   };
 
   const removeFromCart = (productId: string) => {
     setCart((prev) => {
       const newItems = prev.items.filter((item) => item.productId !== productId);
-      return calculateCartTotals(newItems);
+      return calculateCartTotals(newItems, freeShippingThreshold, defaultShippingCost);
     });
   };
 
@@ -113,7 +130,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const newItems = prev.items.map((item) =>
         item.productId === productId ? { ...item, quantity } : item
       );
-      return calculateCartTotals(newItems);
+      return calculateCartTotals(newItems, freeShippingThreshold, defaultShippingCost);
     });
   };
 
@@ -121,8 +138,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart({
       items: [],
       subtotal: 0,
-      shippingCost: DEFAULT_SHIPPING_COST,
-      total: DEFAULT_SHIPPING_COST,
+      shippingCost: defaultShippingCost,
+      total: defaultShippingCost,
     });
   };
 
@@ -145,6 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         isInCart,
         getItemQuantity,
+        freeShippingThreshold,
       }}
     >
       {children}

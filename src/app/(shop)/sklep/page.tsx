@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Package } from "lucide-react";
 
@@ -28,7 +29,7 @@ export default async function ShopPage({
   const offset = (page - 1) * limit;
 
   // Build where clause
-  const where: any = {
+  const where: Prisma.ProductWhereInput = {
     isActive: true,
   };
 
@@ -69,7 +70,7 @@ export default async function ShopPage({
   }
 
   // Build orderBy
-  let orderBy: any = { createdAt: "desc" };
+  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
   switch (params.sortuj) {
     case "cena-rosnaco":
       orderBy = { price: "asc" };
@@ -137,10 +138,7 @@ export default async function ShopPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-4">Sklep</h1>
-        <p className="text-muted">
-          Odkryj unikalne, ręcznie robione produkty od polskich twórców
-        </p>
+        <h1 className="text-3xl font-bold text-foreground">Sklep</h1>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">

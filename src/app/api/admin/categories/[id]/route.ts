@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { categoryUpdateSchema, firstZodMessage } from "@/lib/validation";
+import { deleteUploadedImages } from "@/lib/uploads";
 
 // GET - pobierz pojedynczą kategorię
 export async function GET(
@@ -59,14 +61,21 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { name, slug, description, image, isActive, sortOrder } = body;
+    const body = await request.json().catch(() => null);
+    const parsed = categoryUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: firstZodMessage(parsed.error) },
+        { status: 400 }
+      );
+    }
+    const input = parsed.data;
 
     // Sprawdź czy slug jest unikalny (poza tą kategorią)
-    if (slug) {
+    if (input.slug) {
       const existingCategory = await prisma.category.findFirst({
         where: {
-          slug,
+          slug: input.slug,
           id: { not: id },
         },
       });
@@ -79,29 +88,39 @@ export async function PUT(
       }
     }
 
+    // Poprzednie zdjęcie — usuniemy plik, jeśli zostało podmienione
+    const before = await prisma.category.findUnique({
+      where: { id },
+      select: { image: true },
+    });
+
     const category = await prisma.category.update({
       where: { id },
       data: {
-        ...(name && { name }),
-        ...(slug && { slug }),
-        ...(description !== undefined && { description }),
-        ...(image !== undefined && { image }),
-        ...(isActive !== undefined && { isActive }),
-        ...(sortOrder !== undefined && { sortOrder }),
+        ...(input.name && { name: input.name }),
+        ...(input.slug && { slug: input.slug }),
+        ...(input.description !== undefined && { description: input.description }),
+        ...(input.image !== undefined && { image: input.image }),
+        ...(input.isActive !== undefined && { isActive: input.isActive }),
+        ...(input.sortOrder !== undefined && { sortOrder: input.sortOrder }),
       },
     });
 
+    if (before?.image && before.image !== category.image) {
+      await deleteUploadedImages([before.image]);
+    }
+
     return NextResponse.json({ category });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Błąd aktualizacji kategorii:", error);
-    
-    if (error.code === "P2025") {
+
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
       return NextResponse.json(
         { error: "Kategoria nie znaleziona" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
       { error: "Wystąpił błąd serwera" },
       { status: 500 }
@@ -137,15 +156,17 @@ export async function DELETE(
       );
     }
 
-    await prisma.category.delete({
+    const category = await prisma.category.delete({
       where: { id },
     });
 
+    await deleteUploadedImages([category.image]);
+
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Błąd usuwania kategorii:", error);
-    
-    if (error.code === "P2025") {
+
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
       return NextResponse.json(
         { error: "Kategoria nie znaleziona" },
         { status: 404 }

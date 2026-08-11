@@ -25,9 +25,14 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
         method: "DELETE",
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || "Nie udało się usunąć produktu");
+      }
+
+      if (data.archived) {
+        alert(data.message || "Produkt został zarchiwizowany (ukryty w sklepie).");
       }
 
       router.refresh();

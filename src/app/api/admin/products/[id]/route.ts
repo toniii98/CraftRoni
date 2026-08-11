@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { productUpdateSchema, firstZodMessage } from "@/lib/validation";
+import { deleteUploadedImages } from "@/lib/uploads";
 
 // GET /api/admin/products/[id] - Szczegóły produktu
 export async function GET(
@@ -14,7 +16,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -32,7 +34,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json({ product });
   } catch (error) {
     console.error("Błąd pobierania produktu:", error);
     return NextResponse.json(
@@ -54,24 +56,19 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const body = await request.json();
-    const {
-      name,
-      slug,
-      description,
-      price,
-      salePrice,
-      sku,
-      stock,
-      categoryId,
-      isActive,
-      isFeatured,
-      images,
-    } = body;
+    const body = await request.json().catch(() => null);
+    const parsed = productUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: firstZodMessage(parsed.error) },
+        { status: 400 }
+      );
+    }
+    const input = parsed.data;
 
-    // Sprawdź czy produkt istnieje
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: { images: true },
     });
 
     if (!existingProduct) {
@@ -81,10 +78,24 @@ export async function PUT(
       );
     }
 
+    const newPrice = input.price ?? Number(existingProduct.price);
+    const newSalePrice =
+      input.salePrice !== undefined
+        ? input.salePrice
+        : existingProduct.salePrice
+          ? Number(existingProduct.salePrice)
+          : null;
+    if (newSalePrice != null && newSalePrice >= newPrice) {
+      return NextResponse.json(
+        { error: "Cena promocyjna musi być niższa od ceny podstawowej" },
+        { status: 400 }
+      );
+    }
+
     // Sprawdź czy slug jest unikalny (jeśli zmieniony)
-    if (slug && slug !== existingProduct.slug) {
+    if (input.slug && input.slug !== existingProduct.slug) {
       const slugExists = await prisma.product.findUnique({
-        where: { slug },
+        where: { slug: input.slug },
       });
       if (slugExists) {
         return NextResponse.json(
@@ -94,49 +105,62 @@ export async function PUT(
       }
     }
 
-    // Aktualizuj produkt
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        name: name ?? existingProduct.name,
-        slug: slug ?? existingProduct.slug,
-        description: description !== undefined ? description : existingProduct.description,
-        price: price !== undefined ? parseFloat(price) : existingProduct.price,
-        salePrice: salePrice !== undefined ? (salePrice ? parseFloat(salePrice) : null) : existingProduct.salePrice,
-        sku: sku !== undefined ? sku : existingProduct.sku,
-        stock: stock !== undefined ? parseInt(stock) : existingProduct.stock,
-        categoryId: categoryId ?? existingProduct.categoryId,
-        isActive: isActive !== undefined ? isActive : existingProduct.isActive,
-        isFeatured: isFeatured !== undefined ? isFeatured : existingProduct.isFeatured,
-      },
-      include: {
-        category: true,
-        images: true,
-      },
-    });
-
-    // Jeśli podano nowe obrazy, zaktualizuj je
-    if (images !== undefined) {
-      // Usuń stare obrazy
-      await prisma.productImage.deleteMany({
-        where: { productId: id },
+    if (input.categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: input.categoryId },
       });
-
-      // Dodaj nowe obrazy
-      if (images.length > 0) {
-        await prisma.productImage.createMany({
-          data: images.map((img: { url: string; alt?: string }, index: number) => ({
-            productId: id,
-            url: img.url,
-            alt: img.alt || product.name,
-            isPrimary: index === 0,
-            sortOrder: index,
-          })),
-        });
+      if (!category) {
+        return NextResponse.json(
+          { error: "Wybrana kategoria nie istnieje" },
+          { status: 400 }
+        );
       }
     }
 
-    // Pobierz zaktualizowany produkt z obrazami
+    // Aktualizacja produktu i (opcjonalnie) podmiana obrazków w jednej transakcji
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id },
+        data: {
+          name: input.name ?? undefined,
+          slug: input.slug ?? undefined,
+          description:
+            input.description !== undefined ? input.description : undefined,
+          price: input.price ?? undefined,
+          salePrice: input.salePrice !== undefined ? input.salePrice : undefined,
+          sku: input.sku !== undefined ? input.sku : undefined,
+          stock: input.stock ?? undefined,
+          categoryId: input.categoryId ?? undefined,
+          isActive: input.isActive ?? undefined,
+          isFeatured: input.isFeatured ?? undefined,
+        },
+      });
+
+      if (input.images !== undefined) {
+        await tx.productImage.deleteMany({ where: { productId: id } });
+        if (input.images.length > 0) {
+          await tx.productImage.createMany({
+            data: input.images.map((img, index) => ({
+              productId: id,
+              url: img.url,
+              alt: img.alt || input.name || existingProduct.name,
+              isPrimary: index === 0,
+              sortOrder: index,
+            })),
+          });
+        }
+      }
+    });
+
+    // Usuń z dysku pliki, które zniknęły z listy obrazków
+    if (input.images !== undefined) {
+      const keptUrls = new Set(input.images.map((img) => img.url));
+      const removedUrls = existingProduct.images
+        .map((img) => img.url)
+        .filter((url) => !keptUrls.has(url));
+      await deleteUploadedImages(removedUrls);
+    }
+
     const updatedProduct = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -147,7 +171,7 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json({ product: updatedProduct });
   } catch (error) {
     console.error("Błąd aktualizacji produktu:", error);
     return NextResponse.json(
@@ -158,6 +182,8 @@ export async function PUT(
 }
 
 // DELETE /api/admin/products/[id] - Usuwanie produktu
+// Produkt, który pojawia się w zamówieniach, jest archiwizowany (ukrywany),
+// a nie usuwany — historia zamówień musi pozostać kompletna.
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -170,9 +196,9 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Sprawdź czy produkt istnieje
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: { images: true },
     });
 
     if (!existingProduct) {
@@ -182,17 +208,31 @@ export async function DELETE(
       );
     }
 
-    // Usuń obrazy produktu
-    await prisma.productImage.deleteMany({
+    const orderItemCount = await prisma.orderItem.count({
       where: { productId: id },
     });
 
-    // Usuń produkt
-    await prisma.product.delete({
-      where: { id },
-    });
+    if (orderItemCount > 0) {
+      await prisma.product.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      return NextResponse.json({
+        success: true,
+        archived: true,
+        message:
+          "Produkt występuje w zamówieniach, więc został zarchiwizowany (ukryty w sklepie) zamiast usunięty.",
+      });
+    }
 
-    return NextResponse.json({ success: true });
+    await prisma.$transaction([
+      prisma.productImage.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ]);
+
+    await deleteUploadedImages(existingProduct.images.map((img) => img.url));
+
+    return NextResponse.json({ success: true, archived: false });
   } catch (error) {
     console.error("Błąd usuwania produktu:", error);
     return NextResponse.json(

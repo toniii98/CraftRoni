@@ -71,6 +71,23 @@ html {
   outline-offset: 2px;
 }
 
+/* Stopka "Powered by chybadziala.pl" — terminalowy prompt z mrugającym kursorem */
+.dev-prompt {
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.dev-cursor {
+  display: inline-block;
+  width: 0.6ch;
+  animation: devCursorBlink 1s steps(1, end) infinite;
+}
+
+@keyframes devCursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
 /* Animacje */
 @keyframes fadeIn {
   from {

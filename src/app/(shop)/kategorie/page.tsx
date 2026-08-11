@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Grid3X3, ArrowRight } from "lucide-react";
 import prisma from "@/lib/prisma";
 
@@ -7,17 +8,23 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Kategorie",
-  description: "Przeglądaj kategorie produktów rękodzielniczych - biżuteria, ceramika, tekstylia, drewno i więcej",
+  description: "Przeglądaj portfeliki, nerki i giga nerki szyte przez craft.roni",
 };
 
 // Emoji mapping dla kategorii
 const categoryEmojis: Record<string, string> = {
-  "bizuteria": "💎",
-  "ceramika": "🏺",
-  "tekstylia": "🧶",
-  "drewno": "🪵",
-  "swiece-aromaty": "🕯️",
-  "rekodzielo-ludowe": "🎨",
+  portfeliki: "👛",
+  nerki: "👝",
+  "giga-nerki": "🎒",
+};
+
+const categoryDescriptions: Record<string, string> = {
+  portfeliki:
+    "Ręcznie szyte portfeliki z tkanin z drugiego obiegu. Posiadają dwie przegródki, mieszczą karty i mają wodoodporną podszewkę.",
+  nerki:
+    "Ręcznie szyte nerki idealne na co dzień. Wykonane są z tkanin z drugiego obiegu oraz odpadów tapicerskich. Posiadają dwie komory, wodoodporną podszewkę, karabińczyk na gumce oraz regulowany pasek.",
+  "giga-nerki":
+    "Ręcznie szyte nerki, które pomieszczą małą butelkę z wodą oraz książkę. Wykonane są z odpadów tapicerskich. Posiadają trzy komory, wodoodporną podszewkę, karabińczyk na gumce oraz regulowany pasek.",
 };
 
 export default async function CategoriesPage() {
@@ -40,12 +47,9 @@ export default async function CategoriesPage() {
             <Grid3X3 className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground">
           Kategorie produktów
         </h1>
-        <p className="text-lg text-muted max-w-2xl mx-auto">
-          Odkryj bogactwo polskiego rękodzieła. Wybierz kategorię i znajdź unikalne produkty tworzone z pasją przez lokalnych artystów.
-        </p>
       </div>
 
       {/* Categories grid */}
@@ -59,10 +63,12 @@ export default async function CategoriesPage() {
             {/* Image */}
             <div className="aspect-[4/3] bg-gradient-to-br from-red-50 to-orange-50 relative overflow-hidden">
               {category.image ? (
-                <img 
-                  src={category.image} 
+                <Image
+                  src={category.image}
                   alt={category.name}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -81,8 +87,8 @@ export default async function CategoriesPage() {
                   <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </h2>
-                  <p className="text-muted text-sm mt-2 line-clamp-2">
-                    {category.description}
+                  <p className="text-muted text-sm mt-2">
+                    {categoryDescriptions[category.slug] || category.description}
                   </p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
@@ -97,14 +103,7 @@ export default async function CategoriesPage() {
         ))}
       </div>
 
-      {/* CTA */}
-      <div className="mt-16 text-center bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-8 md:p-12">
-        <h2 className="text-2xl font-bold text-foreground mb-4">
-          Nie możesz się zdecydować?
-        </h2>
-        <p className="text-muted mb-6 max-w-lg mx-auto">
-          Przeglądaj wszystkie produkty i odkryj coś wyjątkowego dla siebie lub na prezent.
-        </p>
+      <div className="mt-12 text-center">
         <Link
           href="/sklep"
           className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors"

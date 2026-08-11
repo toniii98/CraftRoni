@@ -1,4 +1,7 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -20,306 +23,122 @@ async function main() {
   const categories = await Promise.all([
     prisma.category.create({
       data: {
-        name: "Biżuteria",
-        slug: "bizuteria",
-        description: "Ręcznie robiona biżuteria z naturalnych materiałów",
+        name: "Portfeliki",
+        slug: "portfeliki",
+        description: "Ręcznie szyte portfeliki z tkanin z drugiego obiegu. Posiadają dwie przegródki, mieszczą karty i mają wodoodporną podszewkę.",
         sortOrder: 1,
         isActive: true,
       },
     }),
     prisma.category.create({
       data: {
-        name: "Ceramika",
-        slug: "ceramika",
-        description: "Unikalne wyroby ceramiczne tworzone tradycyjnymi metodami",
+        name: "Nerki",
+        slug: "nerki",
+        description: "Ręcznie szyte nerki idealne na co dzień. Wykonane są z tkanin z drugiego obiegu oraz odpadów tapicerskich. Posiadają dwie komory, wodoodporną podszewkę, karabińczyk na gumce oraz regulowany pasek.",
         sortOrder: 2,
         isActive: true,
       },
     }),
     prisma.category.create({
       data: {
-        name: "Tekstylia",
-        slug: "tekstylia",
-        description: "Tkaniny, koce i dekoracje wykonane ręcznie",
+        name: "Giga nerki",
+        slug: "giga-nerki",
+        description: "Ręcznie szyte nerki, które pomieszczą małą butelkę z wodą oraz książkę. Wykonane są z odpadów tapicerskich. Posiadają trzy komory, wodoodporną podszewkę, karabińczyk na gumce oraz regulowany pasek.",
         sortOrder: 3,
-        isActive: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: "Drewno",
-        slug: "drewno",
-        description: "Wyroby z drewna - od dekoracji po praktyczne przedmioty",
-        sortOrder: 4,
-        isActive: true,
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: "Świece i aromaty",
-        slug: "swiece-aromaty",
-        description: "Naturalne świece i produkty aromatyczne",
-        sortOrder: 5,
         isActive: true,
       },
     }),
   ]);
 
-  const [bizuteria, ceramika, tekstylia, drewno, swiece] = categories;
+  const [portfeliki, nerki, gigaNerki] = categories;
 
   console.log(`   ✓ Utworzono ${categories.length} kategorii`);
 
-  // Tworzenie produktów
+  // Produkty demonstracyjne — do podmiany na prawdziwe w panelu admina
   console.log("📦 Tworzenie produktów...");
 
   const products = [
-    // Biżuteria
+    // Portfeliki
     {
-      name: "Kolczyki z bursztynem bałtyckim",
-      slug: "kolczyki-bursztyn-baltycki",
+      name: "Portfelik na zatrzask — bordowy",
+      slug: "portfelik-zatrzask-bordowy",
       description:
-        "Eleganckie kolczyki wykonane ze srebra próby 925 z naturalnymi bursztynami bałtyckimi. Każda para jest unikalna ze względu na niepowtarzalny wzór bursztynu. Idealne na prezent lub jako dodatek do codziennej stylizacji.",
-      price: 189,
-      salePrice: 159,
-      sku: "BIZ-KOL-001",
-      stock: 15,
+        "Ręcznie szyty portfelik zapinany na zatrzask. Dwie przegródki na karty i kieszonka na monety. Kompaktowy — mieści się w każdej torebce i kieszeni.",
+      price: 89,
+      salePrice: null,
+      sku: "POR-001",
+      stock: 5,
       isFeatured: true,
-      categoryId: bizuteria.id,
-      images: [
-        { url: "/images/products/kolczyki-bursztyn-1.jpg", alt: "Kolczyki z bursztynem - widok z przodu", isPrimary: true, sortOrder: 0 },
-        { url: "/images/products/kolczyki-bursztyn-2.jpg", alt: "Kolczyki z bursztynem - detal", isPrimary: false, sortOrder: 1 },
-      ],
+      categoryId: portfeliki.id,
     },
     {
-      name: "Bransoletka pleciona z koralikami",
-      slug: "bransoletka-pleciona-koraliki",
+      name: "Mini portfelik na karty",
+      slug: "mini-portfelik-na-karty",
       description:
-        "Ręcznie pleciona bransoletka z naturalnych materiałów ozdobiona kolorowymi koralikami. Regulowana długość pasuje na większość nadgarstków.",
-      price: 65,
-      salePrice: null,
-      sku: "BIZ-BRA-001",
-      stock: 30,
-      isFeatured: false,
-      categoryId: bizuteria.id,
-      images: [
-        { url: "/images/products/bransoletka-1.jpg", alt: "Bransoletka pleciona", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-    {
-      name: "Naszyjnik z kwarcem różowym",
-      slug: "naszyjnik-kwarc-rozowy",
-      description:
-        "Delikatny naszyjnik z naturalnym kwarcem różowym zawieszonym na srebrnym łańcuszku. Kwarc różowy symbolizuje miłość i harmonię.",
-      price: 145,
-      salePrice: null,
-      sku: "BIZ-NAS-001",
-      stock: 20,
-      isFeatured: true,
-      categoryId: bizuteria.id,
-      images: [
-        { url: "/images/products/naszyjnik-kwarc-1.jpg", alt: "Naszyjnik z kwarcem różowym", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-
-    // Ceramika
-    {
-      name: "Kubek ceramiczny ręcznie malowany",
-      slug: "kubek-ceramiczny-malowany",
-      description:
-        "Kubek o pojemności 350ml wykonany z ceramiki i ręcznie malowany tradycyjnymi polskimi wzorami. Można myć w zmywarce. Każdy kubek jest unikalny.",
-      price: 75,
-      salePrice: null,
-      sku: "CER-KUB-001",
-      stock: 25,
-      isFeatured: true,
-      categoryId: ceramika.id,
-      images: [
-        { url: "/images/products/kubek-ceramiczny-1.jpg", alt: "Kubek ceramiczny malowany", isPrimary: true, sortOrder: 0 },
-        { url: "/images/products/kubek-ceramiczny-2.jpg", alt: "Kubek ceramiczny - wzór", isPrimary: false, sortOrder: 1 },
-      ],
-    },
-    {
-      name: "Miska na owoce - liść",
-      slug: "miska-owoce-lisc",
-      description:
-        "Dekoracyjna miska w kształcie liścia, idealna na owoce lub jako element wystroju. Ręcznie formowana i szkliwiona.",
-      price: 120,
-      salePrice: 99,
-      sku: "CER-MIS-001",
-      stock: 10,
-      isFeatured: false,
-      categoryId: ceramika.id,
-      images: [
-        { url: "/images/products/miska-lisc-1.jpg", alt: "Miska ceramiczna liść", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-    {
-      name: "Wazon ceramiczny artystyczny",
-      slug: "wazon-ceramiczny-artystyczny",
-      description:
-        "Elegancki wazon o organicznych kształtach. Wysokość 25cm. Idealny do suszonych kwiatów i traw ozdobnych.",
-      price: 180,
-      salePrice: null,
-      sku: "CER-WAZ-001",
+        "Najmniejszy z rodziny — mini portfelik na karty płatnicze i dowód. Ręcznie szyty z mocnej tkaniny, zapinany na suwak.",
+      price: 59,
+      salePrice: 49,
+      sku: "POR-002",
       stock: 8,
-      isFeatured: true,
-      categoryId: ceramika.id,
-      images: [
-        { url: "/images/products/wazon-1.jpg", alt: "Wazon ceramiczny", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-
-    // Tekstylia
-    {
-      name: "Poduszka dekoracyjna haftowana",
-      slug: "poduszka-haftowana",
-      description:
-        "Lniana poduszka dekoracyjna z ręcznym haftem w ludowe wzory. Wymiary 45x45cm. Wypełnienie z antyalergicznego włókna.",
-      price: 130,
-      salePrice: null,
-      sku: "TEK-POD-001",
-      stock: 20,
       isFeatured: false,
-      categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/poduszka-1.jpg", alt: "Poduszka haftowana", isPrimary: true, sortOrder: 0 },
-      ],
+      categoryId: portfeliki.id,
     },
+    // Nerki
     {
-      name: "Koc wełniany w kratę",
-      slug: "koc-welnany-krata",
+      name: "Nerka codzienna — czarna",
+      slug: "nerka-codzienna-czarna",
       description:
-        "Miękki koc z naturalnej wełny owczej w klasyczną kratę. Wymiary 150x200cm. Idealny na chłodne wieczory.",
-      price: 350,
-      salePrice: 299,
-      sku: "TEK-KOC-001",
-      stock: 12,
-      isFeatured: true,
-      categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/koc-welnany-1.jpg", alt: "Koc wełniany", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-    {
-      name: "Bieżnik lniany naturalny",
-      slug: "bieznik-lniany",
-      description:
-        "Elegancki bieżnik z naturalnego lnu z delikatnym haftem na brzegach. Wymiary 40x140cm.",
-      price: 95,
+        "Klasyczna, ręcznie szyta nerka na co dzień. Główna komora na suwak, kieszonka wewnętrzna na drobiazgi, regulowany pasek. Uszyta z wytrzymałej tkaniny.",
+      price: 129,
       salePrice: null,
-      sku: "TEK-BIE-001",
-      stock: 18,
-      isFeatured: false,
-      categoryId: tekstylia.id,
-      images: [
-        { url: "/images/products/bieznik-1.jpg", alt: "Bieżnik lniany", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-
-    // Drewno
-    {
-      name: "Deska do krojenia dębowa",
-      slug: "deska-krojenia-dab",
-      description:
-        "Solidna deska do krojenia wykonana z polskiego drewna dębowego. Olejowana naturalnym olejem. Wymiary 40x25cm.",
-      price: 140,
-      salePrice: null,
-      sku: "DRE-DES-001",
-      stock: 15,
-      isFeatured: true,
-      categoryId: drewno.id,
-      images: [
-        { url: "/images/products/deska-dab-1.jpg", alt: "Deska dębowa", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-    {
-      name: "Szkatułka rzeźbiona",
-      slug: "szkatulka-rzezbiona",
-      description:
-        "Ręcznie rzeźbiona szkatułka z drewna lipowego z tradycyjnymi polskimi motywami. Idealna na biżuterię i drobiazgi.",
-      price: 220,
-      salePrice: 189,
-      sku: "DRE-SZK-001",
+      sku: "NER-001",
       stock: 6,
       isFeatured: true,
-      categoryId: drewno.id,
-      images: [
-        { url: "/images/products/szkatulka-1.jpg", alt: "Szkatułka rzeźbiona", isPrimary: true, sortOrder: 0 },
-      ],
+      categoryId: nerki.id,
     },
     {
-      name: "Łyżki drewniane zestaw",
-      slug: "lyzki-drewniane-zestaw",
+      name: "Nerka we wzory",
+      slug: "nerka-we-wzory",
       description:
-        "Zestaw 3 łyżek kuchennych wyrzeźbionych z drewna bukowego. Naturalne, bezpieczne przy kontakcie z żywnością.",
-      price: 55,
+        "Nerka, która nie da się nie zauważyć — ręcznie szyta z tkanin we wzory dostępne w limitowanych seriach. Każda sztuka jest niepowtarzalna.",
+      price: 139,
       salePrice: null,
-      sku: "DRE-LYZ-001",
-      stock: 25,
-      isFeatured: false,
-      categoryId: drewno.id,
-      images: [
-        { url: "/images/products/lyzki-1.jpg", alt: "Łyżki drewniane", isPrimary: true, sortOrder: 0 },
-      ],
-    },
-
-    // Świece i aromaty
-    {
-      name: "Świeca sojowa - leśny mech",
-      slug: "swieca-sojowa-lesny-mech",
-      description:
-        "Naturalna świeca z wosku sojowego o zapachu leśnego mchu i świeżej zieleni. Czas palenia około 40 godzin.",
-      price: 65,
-      salePrice: null,
-      sku: "SWI-SOJ-001",
-      stock: 35,
+      sku: "NER-002",
+      stock: 4,
       isFeatured: true,
-      categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swieca-mech-1.jpg", alt: "Świeca sojowa leśny mech", isPrimary: true, sortOrder: 0 },
-      ],
+      categoryId: nerki.id,
     },
+    // Giga nerki
     {
-      name: "Świeca sojowa - lawenda",
-      slug: "swieca-sojowa-lawenda",
+      name: "Giga nerka podróżna",
+      slug: "giga-nerka-podrozna",
       description:
-        "Relaksująca świeca o zapachu prawdziwej lawendy. Wykonana z naturalnego wosku sojowego. Czas palenia około 40 godzin.",
-      price: 65,
+        "Giga nerka do zadań specjalnych: mieści portfel, telefon, powerbank, klucze i jeszcze zostaje miejsce. Szeroki, regulowany pasek i podwójne szwy.",
+      price: 189,
       salePrice: null,
-      sku: "SWI-SOJ-002",
-      stock: 30,
-      isFeatured: false,
-      categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swieca-lawenda-1.jpg", alt: "Świeca sojowa lawenda", isPrimary: true, sortOrder: 0 },
-      ],
+      sku: "GIG-001",
+      stock: 3,
+      isFeatured: true,
+      categoryId: gigaNerki.id,
     },
     {
-      name: "Zestaw świec bożonarodzeniowych",
-      slug: "zestaw-swiec-bozonarodzeniowy",
+      name: "Giga nerka XXL",
+      slug: "giga-nerka-xxl",
       description:
-        "Zestaw 4 świec o świątecznych zapachach: cynamon, pomarańcza, piernik, choinka. Idealne na prezent.",
-      price: 120,
-      salePrice: 99,
-      sku: "SWI-ZES-001",
-      stock: 20,
+        "Największa nerka w ofercie — wersja XXL z dodatkową przednią kieszenią. Gdy zwykła nerka to za mało, a plecak to za dużo.",
+      price: 219,
+      salePrice: 199,
+      sku: "GIG-002",
+      stock: 2,
       isFeatured: true,
-      categoryId: swiece.id,
-      images: [
-        { url: "/images/products/swiece-zestaw-1.jpg", alt: "Zestaw świec świątecznych", isPrimary: true, sortOrder: 0 },
-      ],
+      categoryId: gigaNerki.id,
     },
   ];
 
+  // Zdjęcia dodaje się przez panel admina (upload) — seed nie tworzy obrazków.
   for (const productData of products) {
-    const { images, ...product } = productData;
     const createdProduct = await prisma.product.create({
-      data: {
-        ...product,
-        images: {
-          create: images,
-        },
-      },
+      data: productData,
     });
     console.log(`   ✓ ${createdProduct.name}`);
   }
@@ -328,19 +147,28 @@ async function main() {
 
   // Tworzenie użytkownika admin
   console.log("👤 Tworzenie użytkownika admin...");
+  const isProduction = process.env.NODE_ENV === "production";
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@craftroni.pl";
+  const generatedPassword = randomBytes(9).toString("base64url");
+  // Dev: stałe hasło admin123. Produkcja: ADMIN_PASSWORD z .env albo losowe.
+  const adminPassword =
+    process.env.ADMIN_PASSWORD || (isProduction ? generatedPassword : "admin123");
+
   const admin = await prisma.user.create({
     data: {
-      email: "admin@craftroni.pl",
+      email: adminEmail,
       name: "Administrator",
-      password: "$2b$12$EiI8mucsA91iVT9owxaJYOd7MB4i8i12INpmEAl5lytMmfJH7EqRa", // hasło: admin123
+      password: await bcrypt.hash(adminPassword, 12),
       role: "ADMIN",
     },
   });
   console.log(`   ✓ Admin: ${admin.email}`);
 
-  // Tworzenie ustawień domyślnych
+  // Tworzenie ustawień domyślnych (istniejące wartości zostają — mogły być
+  // zmienione w panelu admina)
   console.log("⚙️  Tworzenie ustawień...");
   await prisma.setting.createMany({
+    skipDuplicates: true,
     data: [
       { key: "store_name", value: "CraftRoni" },
       { key: "store_email", value: "kontakt@craftroni.pl" },
@@ -355,11 +183,17 @@ async function main() {
   console.log("\n✅ Seedowanie zakończone pomyślnie!");
   console.log("\n📊 Podsumowanie:");
   console.log(`   - Kategorii: ${categories.length}`);
-  console.log(`   - Produktów: ${products.length}`);
+  console.log(`   - Produktów: ${products.length} (demonstracyjne — podmień w panelu)`);
   console.log(`   - Użytkowników: 1 (admin)`);
   console.log("\n🔐 Dane logowania admina:");
-  console.log("   Email: admin@craftroni.pl");
-  console.log("   Hasło: (ustaw własne hasło w panelu)");
+  console.log(`   Email: ${adminEmail}`);
+  if (process.env.ADMIN_PASSWORD) {
+    console.log("   Hasło: (wartość ADMIN_PASSWORD z .env)");
+  } else if (isProduction) {
+    console.log(`   Hasło (wygenerowane, zapisz je!): ${generatedPassword}`);
+  } else {
+    console.log("   Hasło (dev): admin123");
+  }
 }
 
 main()

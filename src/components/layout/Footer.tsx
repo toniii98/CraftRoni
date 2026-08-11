@@ -1,26 +1,24 @@
 import Link from "next/link";
-import { Instagram, Facebook, Mail, Phone, MapPin } from "lucide-react";
+import { Instagram, Mail } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 
 const footerLinks = {
   sklep: [
     { name: "Wszystkie produkty", href: "/sklep" },
-    { name: "Nowości", href: "/sklep?sort=newest" },
-    { name: "Bestsellery", href: "/sklep?sort=popular" },
-    { name: "Promocje", href: "/sklep?sale=true" },
+    { name: "Nowości", href: "/sklep?sortuj=najnowsze" },
+    { name: "Kategorie", href: "/kategorie" },
   ],
   informacje: [
-    { name: "O nas", href: "/o-nas" },
+    { name: "O mnie", href: "/o-nas" },
     { name: "Dostawa i płatność", href: "/dostawa" },
     { name: "Zwroty i reklamacje", href: "/zwroty" },
     { name: "Regulamin", href: "/regulamin" },
     { name: "Polityka prywatności", href: "/prywatnosc" },
   ],
   kategorie: [
-    { name: "Biżuteria", href: "/kategorie/bizuteria" },
-    { name: "Ceramika", href: "/kategorie/ceramika" },
-    { name: "Tekstylia", href: "/kategorie/tekstylia" },
-    { name: "Dekoracje", href: "/kategorie/dekoracje" },
+    { name: "Portfeliki", href: "/sklep?kategoria=portfeliki" },
+    { name: "Nerki", href: "/sklep?kategoria=nerki" },
+    { name: "Giga nerki", href: "/sklep?kategoria=giga-nerki" },
   ],
 };
 
@@ -51,15 +49,6 @@ export function Footer() {
                 aria-label="Instagram"
               >
                 <Instagram className="h-6 w-6" />
-              </a>
-              <a
-                href={siteConfig.social.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/60 hover:text-primary transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-6 w-6" />
               </a>
             </div>
           </div>
@@ -111,21 +100,6 @@ export function Footer() {
                   {siteConfig.contact.email}
                 </a>
               </li>
-              <li className="flex items-center space-x-3 text-sm">
-                <Phone className="h-4 w-4 text-primary" />
-                <a
-                  href={`tel:${siteConfig.contact.phone}`}
-                  className="text-white/60 hover:text-primary transition-colors"
-                >
-                  {siteConfig.contact.phone}
-                </a>
-              </li>
-              <li className="flex items-start space-x-3 text-sm">
-                <MapPin className="h-4 w-4 text-primary mt-0.5" />
-                <span className="text-white/60">
-                  Polska
-                </span>
-              </li>
             </ul>
           </div>
         </div>
@@ -144,6 +118,22 @@ export function Footer() {
               </span>
             </div>
           </div>
+
+          {/* Powered by chybadziala.pl */}
+          <p className="mt-4 text-center text-sm text-white/40">
+            <span className="dev-prompt" aria-hidden="true">
+              &gt;<span className="dev-cursor">_</span>
+            </span>{" "}
+            Powered by{" "}
+            <a
+              href="https://chybadziala.pl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white/40 hover:text-primary transition-colors"
+            >
+              chybadziala.pl
+            </a>
+          </p>
         </div>
       </div>
     </footer>
