@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "test": "tsx --test src/lib/autopay.test.ts",
-    "start": "next start",
+    "start": "node server.cjs",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

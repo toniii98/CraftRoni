@@ -1,8 +1,86 @@
 # Wdrożenie CraftRoni na serwer
 
-Instrukcja zakłada serwer Linux, Node.js 22 LTS, MySQL lub MariaDB, domenę z HTTPS
-oraz reverse proxy (nginx albo Caddy). Nie kopiuj lokalnego pliku `.env` na serwer
-bez przejrzenia go — dane testowe i produkcyjne muszą być rozdzielone.
+Instrukcja zakłada serwer Linux, Node.js 20.9 lub nowszy, MySQL lub MariaDB oraz
+domenę z HTTPS. Nie kopiuj lokalnego pliku `.env` na serwer bez przejrzenia go —
+dane testowe i produkcyjne muszą być rozdzielone.
+
+## SEOHOST: DirectAdmin i Node.js Selector
+
+Kod aplikacji pozostaje poza katalogiem domeny:
+
+```text
+/home/srv80158/CraftRoni
+```
+
+Nie kopiuj projektu do `public_html` ani `private_html` i nie twórz w nich dowiązania
+do `.env`. DirectAdmin/Passenger połączy URL domeny z procesem Node.js. Plik `.env`
+pozostaje w katalogu aplikacji i powinien mieć uprawnienia `600`.
+
+Po pobraniu aktualnego `main` utwórz `.env`:
+
+```bash
+cd /home/srv80158/CraftRoni
+git pull --ff-only origin main
+umask 077
+cp -n .env.example .env
+chmod 600 .env
+nano .env
+```
+
+Sekret sesji można wygenerować przed aktywowaniem Node.js Selectora:
+
+```bash
+openssl rand -base64 32
+```
+
+Minimalna konfiguracja produkcyjna:
+
+```env
+DATABASE_URL="mysql://USER:HASLO@localhost:3306/BAZA"
+NEXT_PUBLIC_APP_URL="https://craftroni.pl"
+AUTH_SECRET="WYGENEROWANY_LOSOWY_SEKRET"
+```
+
+Jeżeli baza nie działa na tym samym serwerze, zamiast `localhost` użyj hosta
+podanego przez operatora. Znaki specjalne w loginie lub haśle muszą być zakodowane
+zgodnie z percent-encoding dla adresów URL.
+
+W kreatorze „Node.js App” ustaw:
+
+- wersja Node.js: `24.18.0`,
+- tryb aplikacji: `Production`,
+- katalog główny aplikacji: `CraftRoni`,
+- URL aplikacji: domena `craftroni.pl`, pole ścieżki pozostaw puste,
+- plik startowy aplikacji: `server.cjs`.
+
+Nie ustawiaj ręcznie `PORT` ani `NODE_ENV`: port przekazuje Passenger, a
+`NODE_ENV=production` wynika z trybu aplikacji. Po utworzeniu aplikacji panel pokaże
+komendę aktywacji jej środowiska. Skopiuj ją dokładnie; będzie podobna do:
+
+```bash
+source /home/srv80158/nodevenv/CraftRoni/24/bin/activate
+```
+
+Po aktywowaniu środowiska zainstaluj również zależności potrzebne do budowania,
+zastosuj migracje i zbuduj aplikację:
+
+```bash
+cd /home/srv80158/CraftRoni
+npm ci --include=dev
+npm run db:generate
+npm run db:migrate:deploy
+npm run db:seed
+npm run test
+npm run build
+mkdir -p public/uploads/products public/uploads/categories
+chmod 750 public/uploads public/uploads/products public/uploads/categories
+```
+
+Pierwszego administratora utwórz zgodnie z sekcją „Utworzenie pierwszego
+administratora” poniżej. Na końcu użyj przycisku `Restart` w Node.js App. Nie
+uruchamiaj trwałego procesu przez zwykłe `npm start` w terminalu — zarządza nim
+Passenger. Przy kolejnej aktualizacji wykonaj `git pull --ff-only`, instalację,
+migracje, build i restart aplikacji w panelu.
 
 ## 1. Przygotowanie bazy i aplikacji
 
