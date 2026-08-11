@@ -71,10 +71,17 @@ npm run db:generate
 npm run db:migrate:deploy
 npm run db:seed
 npm run test
-npm run build
+NEXT_TELEMETRY_DISABLED=1 RAYON_NUM_THREADS=1 npm run build
+test -s .next/BUILD_ID && echo "BUILD OK"
 mkdir -p public/uploads/products public/uploads/categories
 chmod 750 public/uploads public/uploads/products public/uploads/categories
 ```
+
+Projekt ma ograniczoną do jednego workera konfigurację buildu dla współdzielonego
+hostingu SEOHOST. Skrypt `npm run build` używa Webpacka, ponieważ domyślny
+Turbopack może przekroczyć limit wątków. Nie uruchamiaj na serwerze polecenia
+`next build` bezpośrednio: lokalny plik wykonywalny Next.js jest dostępny przez
+skrypty npm, nie jako globalna komenda.
 
 Pierwszego administratora utwórz zgodnie z sekcją „Utworzenie pierwszego
 administratora” poniżej. Na końcu użyj przycisku `Restart` w Node.js App. Nie
@@ -194,7 +201,8 @@ npm run db:generate
 npm run db:migrate:deploy
 npm run test
 npm run lint
-npm run build
+NEXT_TELEMETRY_DISABLED=1 RAYON_NUM_THREADS=1 npm run build
+test -s .next/BUILD_ID && echo "BUILD OK"
 ```
 
 Następnie zrestartuj usługę i sprawdź stronę sklepu, logowanie do panelu, zapis

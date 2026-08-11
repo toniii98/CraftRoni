@@ -14,6 +14,19 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
+  // SEOHOST ogranicza liczbę procesów i wątków użytkownika. Domyślny build
+  // Next.js uruchamia kilka procesów potomnych, co kończy się błędem EAGAIN.
+  // Jeden worker thread utrzymuje build w ramach limitów współdzielonego hostingu.
+  experimental: {
+    cpus: 1,
+    workerThreads: true,
+    webpackBuildWorker: false,
+    parallelServerCompiles: false,
+    parallelServerBuildTraces: false,
+    webpackMemoryOptimizations: true,
+    staticGenerationMaxConcurrency: 1,
+    staticGenerationMinPagesPerWorker: 100,
+  },
   async headers() {
     return [
       {
