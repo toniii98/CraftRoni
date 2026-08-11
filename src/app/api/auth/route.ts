@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server";
 import { login, deleteSession } from "@/lib/auth";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    // Ochrona przed brute force: 10 prób logowania na 15 minut z jednego IP
+    const limit = rateLimit(`login:${clientIp(request)}`, 10, 15 * 60 * 1000);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Zbyt wiele prób logowania. Spróbuj ponownie później." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      );
+    }
+
     const body = await request.json();
     const { email, password } = body;
 
-    if (!email || !password) {
+    if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return NextResponse.json(
         { error: "Email i hasło są wymagane" },
         { status: 400 }

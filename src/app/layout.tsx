@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { CartProvider } from "@/context/CartContext";
 import { siteConfig } from "@/lib/config";
 
 const montserrat = Montserrat({
@@ -46,6 +43,8 @@ export const metadata: Metadata = {
   },
 };
 
+// Chrome sklepu (Header/Footer/koszyk) jest w (shop)/layout.tsx,
+// panel admina ma własny layout — tutaj tylko fonty i metadata.
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,13 +53,7 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <body className={`${montserrat.variable} ${playfair.variable} font-sans antialiased`}>
-        <CartProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </CartProvider>
+        {children}
       </body>
     </html>
   );

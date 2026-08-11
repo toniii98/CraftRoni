@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Lock, Mail, AlertCircle, ArrowLeft } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -64,9 +65,13 @@ export default function AdminLoginPage() {
 
         {/* Logo */}
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Lock className="h-8 w-8 text-primary" />
-          </div>
+          <Image
+            src="/brand/emblem.png"
+            alt="craft.roni"
+            width={96}
+            height={105}
+            className="mx-auto mb-4 h-24 w-auto"
+          />
           <h2 className="text-3xl font-bold text-foreground">Panel administracyjny</h2>
           <p className="mt-2 text-muted">Zaloguj się, aby zarządzać sklepem</p>
         </div>
@@ -101,7 +106,7 @@ export default function AdminLoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="admin@craftroni.pl"
+                  placeholder="twoj@email.pl"
                 />
               </div>
             </div>
@@ -134,15 +139,6 @@ export default function AdminLoginPage() {
               {isLoading ? "Logowanie..." : "Zaloguj się"}
             </Button>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs text-muted text-center">
-              <strong>Dane testowe:</strong><br />
-              Email: admin@craftroni.pl<br />
-              Hasło: admin123
-            </p>
-          </div>
         </div>
       </div>
     </div>

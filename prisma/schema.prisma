@@ -25,7 +25,8 @@ model User {
   
   orders        Order[]
   sessions      Session[]
-  
+  passwordResetTokens PasswordResetToken[]
+
   @@map("users")
 }
 
@@ -35,10 +36,25 @@ model Session {
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
-  
+
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("sessions")
+}
+
+// Token resetu hasła — w bazie trzymany jako hash (jak sesje).
+// Jednorazowy: po użyciu ustawiane jest usedAt.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 enum Role {

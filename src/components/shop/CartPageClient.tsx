@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 
 export function CartPageClient() {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, clearCart, freeShippingThreshold } = useCart();
 
   if (cart.items.length === 0) {
     return (
@@ -29,7 +29,6 @@ export function CartPageClient() {
     );
   }
 
-  const freeShippingThreshold = 200;
   const amountToFreeShipping = freeShippingThreshold - cart.subtotal;
 
   return (

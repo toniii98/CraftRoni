@@ -1,23 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, ShoppingCart, User, Search } from "lucide-react";
-import { siteConfig } from "@/lib/config";
+import { Menu, X, ShoppingCart, Search, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 const navigation = [
   { name: "Strona główna", href: "/" },
   { name: "Sklep", href: "/sklep" },
   { name: "Kategorie", href: "/kategorie" },
-  { name: "O nas", href: "/o-nas" },
+  { name: "O mnie", href: "/o-nas" },
   { name: "Kontakt", href: "/kontakt" },
 ];
 
-export function Header() {
+interface HeaderProps {
+  /** Próg darmowej dostawy z ustawień sklepu. */
+  freeShippingThreshold?: number;
+}
+
+export function Header({ freeShippingThreshold = 200 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { cart } = useCart();
-  
+
   // Oblicz całkowitą liczbę produktów w koszyku
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -25,16 +31,21 @@ export function Header() {
     <header className="bg-surface shadow-sm sticky top-0 z-50 border-b border-border">
       {/* Top bar */}
       <div className="bg-primary text-white text-center py-2 text-sm">
-        🎁 Darmowa dostawa od {siteConfig.shop.freeShippingThreshold} zł!
+        🎁 Darmowa dostawa od {freeShippingThreshold} zł!
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="font-serif text-2xl font-bold text-primary tracking-tight">
-              {siteConfig.name}
-            </span>
+          <Link href="/" className="flex items-center" aria-label="craft.roni — strona główna">
+            <Image
+              src="/brand/wordmark.png"
+              alt="craft.roni — polskie rękodzieło"
+              width={152}
+              height={44}
+              priority
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -54,13 +65,17 @@ export function Header() {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <button
-              className="p-2 text-foreground hover:text-primary transition-colors"
+              className={`p-2 transition-colors ${
+                isSearchOpen ? "text-primary" : "text-foreground hover:text-primary"
+              }`}
               aria-label="Szukaj"
+              aria-expanded={isSearchOpen}
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               <Search className="h-5 w-5" />
             </button>
 
-            {/* User */}
+            {/* Konto klienta */}
             <Link
               href="/konto"
               className="p-2 text-foreground hover:text-primary transition-colors"
@@ -97,6 +112,27 @@ export function Header() {
             </button>
           </div>
         </div>
+
+        {/* Search bar */}
+        {isSearchOpen && (
+          <div className="py-3 border-t border-border">
+            <form action="/sklep" method="get" className="flex gap-2">
+              <input
+                type="search"
+                name="szukaj"
+                placeholder="Czego szukasz? Np. kolczyki, kubek, świeca..."
+                autoFocus
+                className="flex-1 px-4 py-2 border border-border rounded-lg bg-surface text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium"
+              >
+                Szukaj
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Mobile Navigation */}
         {isMenuOpen && (

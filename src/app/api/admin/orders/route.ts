@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { OrderStatus, type Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 
 // GET /api/admin/orders - Lista zamówień dla admina
@@ -18,10 +19,14 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.OrderWhereInput = {};
 
-    if (status && status !== "all") {
-      where.status = status;
+    if (
+      status &&
+      status !== "all" &&
+      (Object.values(OrderStatus) as string[]).includes(status)
+    ) {
+      where.status = status as OrderStatus;
     }
 
     if (search) {

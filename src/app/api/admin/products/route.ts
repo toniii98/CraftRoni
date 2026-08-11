@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { productCreateSchema, firstZodMessage } from "@/lib/validation";
 
 // GET /api/admin/products - Lista produktów dla admina
 export async function GET(request: Request) {
@@ -72,32 +73,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
-    const {
-      name,
-      slug,
-      description,
-      price,
-      salePrice,
-      sku,
-      stock,
-      categoryId,
-      isActive,
-      isFeatured,
-      images,
-    } = body;
-
-    // Walidacja
-    if (!name || !slug || !price || !categoryId) {
+    const body = await request.json().catch(() => null);
+    const parsed = productCreateSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Nazwa, slug, cena i kategoria są wymagane" },
+        { error: firstZodMessage(parsed.error) },
+        { status: 400 }
+      );
+    }
+    const input = parsed.data;
+
+    if (input.salePrice != null && input.salePrice >= input.price) {
+      return NextResponse.json(
+        { error: "Cena promocyjna musi być niższa od ceny podstawowej" },
         { status: 400 }
       );
     }
 
     // Sprawdź czy slug jest unikalny
     const existingProduct = await prisma.product.findUnique({
-      where: { slug },
+      where: { slug: input.slug },
     });
 
     if (existingProduct) {
@@ -107,23 +102,33 @@ export async function POST(request: Request) {
       );
     }
 
+    const category = await prisma.category.findUnique({
+      where: { id: input.categoryId },
+    });
+    if (!category) {
+      return NextResponse.json(
+        { error: "Wybrana kategoria nie istnieje" },
+        { status: 400 }
+      );
+    }
+
     const product = await prisma.product.create({
       data: {
-        name,
-        slug,
-        description: description || null,
-        price: parseFloat(price),
-        salePrice: salePrice ? parseFloat(salePrice) : null,
-        sku: sku || null,
-        stock: parseInt(stock) || 0,
-        categoryId,
-        isActive: isActive ?? true,
-        isFeatured: isFeatured ?? false,
-        images: images?.length
+        name: input.name,
+        slug: input.slug,
+        description: input.description || null,
+        price: input.price,
+        salePrice: input.salePrice ?? null,
+        sku: input.sku || null,
+        stock: input.stock,
+        categoryId: input.categoryId,
+        isActive: input.isActive ?? true,
+        isFeatured: input.isFeatured ?? false,
+        images: input.images?.length
           ? {
-              create: images.map((img: { url: string; alt?: string }, index: number) => ({
+              create: input.images.map((img, index) => ({
                 url: img.url,
-                alt: img.alt || name,
+                alt: img.alt || input.name,
                 isPrimary: index === 0,
                 sortOrder: index,
               })),
@@ -136,7 +141,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
     console.error("Błąd tworzenia produktu:", error);
     return NextResponse.json(

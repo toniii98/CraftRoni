@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { categoryCreateSchema, firstZodMessage } from "@/lib/validation";
 
 // GET /api/admin/categories - Lista kategorii dla admina
 export async function GET() {
@@ -37,19 +38,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
-    const { name, slug, description, image, isActive, sortOrder } = body;
-
-    if (!name || !slug) {
+    const body = await request.json().catch(() => null);
+    const parsed = categoryCreateSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Nazwa i slug są wymagane" },
+        { error: firstZodMessage(parsed.error) },
         { status: 400 }
       );
     }
+    const input = parsed.data;
 
     // Sprawdź czy slug jest unikalny
     const existingCategory = await prisma.category.findUnique({
-      where: { slug },
+      where: { slug: input.slug },
     });
 
     if (existingCategory) {
@@ -61,12 +62,12 @@ export async function POST(request: Request) {
 
     const category = await prisma.category.create({
       data: {
-        name,
-        slug,
-        description: description || null,
-        image: image || null,
-        isActive: isActive ?? true,
-        sortOrder: sortOrder ?? 0,
+        name: input.name,
+        slug: input.slug,
+        description: input.description || null,
+        image: input.image || null,
+        isActive: input.isActive ?? true,
+        sortOrder: input.sortOrder ?? 0,
       },
     });
 

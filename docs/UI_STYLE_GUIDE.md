@@ -2,6 +2,27 @@
 
 Źródło prawdy dla wyglądu marki. Każda zmiana w UI powinna być zgodna z tym dokumentem.
 
+## 🏷 Znaki marki
+
+Pliki źródłowe: `/assets` (oryginalne PNG). Pliki produkcyjne (przycięte,
+przezroczyste tło): `/public/brand`.
+
+| Plik | Zastosowanie |
+|------|--------------|
+| `public/brand/wordmark.png` | Poziomy napis „craft.roni · polskie rękodzieło" — logo w nagłówku sklepu, materiały poziome |
+| `public/brand/emblem.png` | Okrągły emblemat (postać + igła) — hero, strona logowania, favicon, social media, naklejki |
+| `src/app/icon.png` / `apple-icon.png` | Favicony wygenerowane z emblematu (białe tło) |
+
+Zasady:
+- Wordmark na jasnych tłach (napis jest czarny). Na ciemnych tłach używać samego
+  tekstu w kolorze białym/primary — nie ma jeszcze białej wersji wordmarku.
+- **Emblemat działa na dowolnym tle**: obszar wokół grafiki jest przezroczysty,
+  ale białe elementy postaci (fartuszek, twarz, kołnierz) są kryjąco białe.
+  Oczka liter w otaczających napisach pozostają przezroczyste — tak jak
+  w poprawnej typografii.
+- Nazwa marki w tekstach: **craft.roni** (małe litery, z kropką) w kontekście
+  brandowym; „CraftRoni" w tekstach technicznych/metadata.
+
 ## 🎨 Paleta kolorów
 
 | Nazwa            | Hex       | Zastosowanie                                    |

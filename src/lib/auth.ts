@@ -1,11 +1,17 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "crypto";
 import { prisma } from "./prisma";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "craftroni-secret-key-change-in-production"
-);
+if (!process.env.AUTH_SECRET) {
+  // Celowo bez fallbacku: znany publicznie sekret pozwoliłby podrobić token admina.
+  throw new Error(
+    "Brak zmiennej środowiskowej AUTH_SECRET. Wygeneruj ją poleceniem: openssl rand -base64 32"
+  );
+}
+
+const JWT_SECRET = new TextEncoder().encode(process.env.AUTH_SECRET);
 
 const COOKIE_NAME = "craftroni-session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 dni w sekundach
@@ -15,6 +21,13 @@ export interface SessionPayload {
   email: string;
   role: "ADMIN" | "CUSTOMER";
   expiresAt: Date;
+}
+
+// W bazie trzymamy hash tokenu, nie sam token:
+// 1) JWT (~300 znaków) nie mieści się w kolumnie VARCHAR(191),
+// 2) wyciek bazy nie ujawnia działających tokenów sesji.
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 // Hashowanie hasła
@@ -74,9 +87,14 @@ export async function createSession(userId: string, email: string, role: "ADMIN"
   await prisma.session.create({
     data: {
       userId,
-      token,
+      token: hashToken(token),
       expiresAt,
     },
+  });
+
+  // Sprzątanie wygasłych sesji, żeby tabela nie rosła w nieskończoność
+  await prisma.session.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
   });
 
   return token;
@@ -86,18 +104,28 @@ export async function createSession(userId: string, email: string, role: "ADMIN"
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  
+
   if (!token) return null;
-  
+
   const payload = await verifyToken(token);
   if (!payload) return null;
-  
+
   // Sprawdź czy sesja nie wygasła
   if (new Date() > payload.expiresAt) {
     await deleteSession();
     return null;
   }
-  
+
+  // Sesja musi istnieć w bazie — dzięki temu wylogowanie natychmiast
+  // unieważnia token (sam JWT byłby ważny do końca terminu).
+  const dbSession = await prisma.session.findUnique({
+    where: { token: hashToken(token) },
+    select: { expiresAt: true },
+  });
+  if (!dbSession || dbSession.expiresAt < new Date()) {
+    return null;
+  }
+
   return payload;
 }
 
@@ -109,7 +137,7 @@ export async function deleteSession() {
   if (token) {
     // Usuń sesję z bazy
     await prisma.session.deleteMany({
-      where: { token },
+      where: { token: hashToken(token) },
     });
   }
   
@@ -122,7 +150,7 @@ export async function login(
   password: string
 ): Promise<{ success: boolean; error?: string }> {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: email.trim().toLowerCase() },
   });
 
   if (!user) {
@@ -136,6 +164,78 @@ export async function login(
 
   await createSession(user.id, user.email, user.role);
   return { success: true };
+}
+
+const RESET_TOKEN_DURATION_MS = 60 * 60 * 1000; // 1 godzina
+
+/**
+ * Tworzy jednorazowy token resetu hasła. Zwraca surowy token do wysłania
+ * mailem — w bazie zapisujemy wyłącznie jego hash.
+ */
+export async function createPasswordResetToken(userId: string): Promise<string> {
+  const token = randomBytes(32).toString("base64url");
+
+  // Unieważnij wcześniejsze, niewykorzystane tokeny tego użytkownika
+  await prisma.passwordResetToken.deleteMany({
+    where: { userId, usedAt: null },
+  });
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId,
+      token: hashToken(token),
+      expiresAt: new Date(Date.now() + RESET_TOKEN_DURATION_MS),
+    },
+  });
+
+  return token;
+}
+
+/** Zwraca userId, jeśli token jest ważny (istnieje, nie wygasł, niewykorzystany). */
+export async function consumePasswordResetToken(token: string): Promise<string | null> {
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { token: hashToken(token) },
+  });
+
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    return null;
+  }
+
+  await prisma.passwordResetToken.update({
+    where: { id: record.id },
+    data: { usedAt: new Date() },
+  });
+
+  return record.userId;
+}
+
+/** Sprawdza ważność tokenu bez jego zużywania (do wyświetlenia formularza). */
+export async function isPasswordResetTokenValid(token: string): Promise<boolean> {
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { token: hashToken(token) },
+    select: { usedAt: true, expiresAt: true },
+  });
+
+  return Boolean(record && !record.usedAt && record.expiresAt > new Date());
+}
+
+/** Unieważnia wszystkie sesje użytkownika (po resecie hasła). */
+export async function revokeAllSessions(userId: string): Promise<void> {
+  await prisma.session.deleteMany({ where: { userId } });
+}
+
+// Unieważnia wszystkie sesje użytkownika poza bieżącą
+// (używane po zmianie hasła).
+export async function revokeOtherSessions(userId: string): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+
+  await prisma.session.deleteMany({
+    where: {
+      userId,
+      ...(token ? { NOT: { token: hashToken(token) } } : {}),
+    },
+  });
 }
 
 // Sprawdzenie czy użytkownik jest adminem

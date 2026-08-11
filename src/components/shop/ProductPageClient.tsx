@@ -18,7 +18,7 @@ interface ProductPageClientProps {
 export function ProductPageClient({ product, relatedProducts }: ProductPageClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const { addToCart, isInCart } = useCart();
+  const { addToCart, isInCart, freeShippingThreshold } = useCart();
 
   const images = product.images?.length > 0 
     ? product.images 
@@ -43,7 +43,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         {product.category && (
           <>
             <span>/</span>
-            <Link href={`/sklep?category=${product.category.slug}`} className="hover:text-primary">
+            <Link href={`/sklep?kategoria=${product.category.slug}`} className="hover:text-primary">
               {product.category.name}
             </Link>
           </>
@@ -123,7 +123,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
           {/* Category */}
           {product.category && (
             <Link
-              href={`/sklep?category=${product.category.slug}`}
+              href={`/sklep?kategoria=${product.category.slug}`}
               className="text-sm text-primary hover:text-primary-dark uppercase tracking-wide"
             >
               {product.category.name}
@@ -224,7 +224,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               <Truck className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm font-medium text-foreground">Darmowa dostawa</p>
-                <p className="text-xs text-muted">Od 200 zł</p>
+                <p className="text-xs text-muted">Od {freeShippingThreshold} zł</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

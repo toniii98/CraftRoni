@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Lock, ShoppingCart } from "lucide-react";
@@ -26,6 +26,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: "",
     name: "",
@@ -36,6 +38,22 @@ export default function CheckoutPage() {
     notes: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Zalogowany klient — wstępnie uzupełnij email i imię z konta
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.authenticated) {
+          setFormData((prev) => ({
+            ...prev,
+            email: prev.email || data.user.email || "",
+            name: prev.name || data.user.name || "",
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,12 +91,17 @@ export default function CheckoutPage() {
       newErrors.zipCode = "Nieprawidłowy format (XX-XXX)";
     }
 
+    if (!termsAccepted) {
+      newErrors.terms = "Akceptacja regulaminu jest wymagana";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     if (!validateForm()) return;
 
@@ -100,6 +123,7 @@ export default function CheckoutPage() {
           shippingCity: formData.city,
           shippingZip: formData.zipCode,
           notes: formData.notes,
+          termsAccepted,
         }),
       });
 
@@ -107,14 +131,20 @@ export default function CheckoutPage() {
 
       if (data.success) {
         clearCart();
-        router.push(data.data.paymentUrl);
+        const paymentUrl: string = data.data.paymentUrl;
+        if (paymentUrl.startsWith("http")) {
+          // Zewnętrzna strona płatności (Przelewy24)
+          window.location.assign(paymentUrl);
+        } else {
+          router.push(paymentUrl);
+        }
       } else {
-        alert(data.error || "Wystąpił błąd podczas składania zamówienia");
+        setSubmitError(data.error || "Wystąpił błąd podczas składania zamówienia");
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Order error:", error);
-      alert("Wystąpił błąd. Spróbuj ponownie.");
-    } finally {
+      setSubmitError("Wystąpił błąd. Spróbuj ponownie.");
       setIsLoading(false);
     }
   };
@@ -294,7 +324,52 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Submit */}
+              {/* Regulamin */}
+              <div className="mb-6">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      if (errors.terms) {
+                        setErrors((prev) => ({ ...prev, terms: "" }));
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-muted">
+                    Akceptuję{" "}
+                    <Link
+                      href="/regulamin"
+                      target="_blank"
+                      className="text-primary underline underline-offset-4"
+                    >
+                      regulamin sklepu
+                    </Link>{" "}
+                    i{" "}
+                    <Link
+                      href="/prywatnosc"
+                      target="_blank"
+                      className="text-primary underline underline-offset-4"
+                    >
+                      politykę prywatności
+                    </Link>{" "}
+                    *
+                  </span>
+                </label>
+                {errors.terms && (
+                  <p className="mt-1 text-sm text-primary">{errors.terms}</p>
+                )}
+              </div>
+
+              {submitError && (
+                <div className="bg-primary/5 border border-primary/20 text-primary-dark rounded-lg px-4 py-3 mb-4 text-sm">
+                  {submitError}
+                </div>
+              )}
+
+              {/* Submit — nazwa przycisku sygnalizuje obowiązek zapłaty (wymóg ustawowy) */}
               <Button
                 type="submit"
                 className="w-full"
@@ -302,7 +377,7 @@ export default function CheckoutPage() {
                 isLoading={isLoading}
               >
                 <Lock className="h-4 w-4 mr-2" />
-                Przejdź do płatności
+                Kupuję i płacę
               </Button>
 
               <p className="text-xs text-muted text-center mt-4">
