@@ -5,7 +5,7 @@ import { generateOrderNumber } from "@/lib/utils";
 import { createOrderSchema, firstZodMessage } from "@/lib/validation";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { getShopSettings } from "@/lib/settings";
-import { isP24Configured, registerTransaction } from "@/lib/p24";
+import { isAutopayConfigured } from "@/lib/autopay";
 import {
   sendOrderConfirmationEmail,
   sendNewOrderNotification,
@@ -108,27 +108,19 @@ export async function POST(request: NextRequest) {
           shippingCost,
           total,
           status: "PENDING",
-          paymentMethod: isP24Configured() ? "przelewy24" : null,
+          paymentMethod: isAutopayConfigured() ? "autopay" : null,
           items: { create: orderItems },
         },
         include: { items: true },
       });
     });
 
-    // Płatność online (Przelewy24) — gdy skonfigurowana, kierujemy klienta
-    // na stronę płatności; w razie problemu zamówienie zostaje jako PENDING.
+    // Płatność online (Autopay) — podpisany formularz POST jest generowany na
+    // osobnej stronie przekierowania. Gdy integracja jest wyłączona, zamówienie
+    // pozostaje PENDING, a płatność można ustalić mailowo.
     let paymentUrl = `/zamowienie/potwierdzenie?order=${encodeURIComponent(order.orderNumber)}`;
-    if (isP24Configured()) {
-      try {
-        paymentUrl = await registerTransaction({
-          orderNumber: order.orderNumber,
-          totalPln: Number(order.total),
-          customerEmail: order.customerEmail,
-          customerName: order.customerName,
-        });
-      } catch (error) {
-        console.error("P24: nie udało się zarejestrować transakcji:", error);
-      }
+    if (isAutopayConfigured()) {
+      paymentUrl = `/platnosc/autopay?order=${encodeURIComponent(order.orderNumber)}`;
     }
 
     // E-maile (nie blokują odpowiedzi w razie błędu — obsługa wewnątrz lib/email)

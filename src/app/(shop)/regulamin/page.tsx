@@ -58,8 +58,8 @@ export default function RegulaminPage() {
         <h2>§4. Płatności</h2>
         <ol>
           <li>
-            Płatności online obsługiwane są przez serwis Przelewy24 (PayPro S.A., ul. Pastelowa 8,
-            60-198 Poznań) — dostępne metody to m.in. BLIK, szybki przelew i karta płatnicza.
+            Płatności online obsługiwane są przez Autopay S.A. (ul. Powstańców Warszawy 6,
+            81-718 Sopot) — dostępne metody to m.in. BLIK, szybki przelew i karta płatnicza.
           </li>
           <li>
             Zamówienie nieopłacone w terminie [UZUPEŁNIJ: np. 3 dni roboczych] od złożenia może

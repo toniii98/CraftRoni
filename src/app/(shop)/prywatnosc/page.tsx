@@ -38,9 +38,10 @@ export default function PrywatnoscPage() {
 
       <section>
         <h2>3. Odbiorcy danych</h2>
-        <p>Dane przekazujemy wyłącznie podmiotom niezbędnym do realizacji zamówienia:</p>
+        <p>Dane przekazujemy wyłącznie podmiotom niezbędnym do realizacji opisanych celów:</p>
         <ul>
-          <li>operatorowi płatności — PayPro S.A. (Przelewy24),</li>
+          <li>operatorowi płatności — Autopay S.A.,</li>
+          <li>dostawcy obsługi formularza kontaktowego — Formspree,</li>
           <li>firmom kurierskim / pocztowym realizującym dostawę: [UZUPEŁNIJ: nazwy przewoźników],</li>
           <li>dostawcy hostingu: [UZUPEŁNIJ: nazwa firmy hostingowej],</li>
           <li>biuru rachunkowemu: [UZUPEŁNIJ lub usuń].</li>

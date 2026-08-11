@@ -3,22 +3,37 @@ import Link from "next/link";
 import { CheckCircle, Clock, Package, Mail } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { isEmailConfigured } from "@/lib/email";
+import { isAutopayConfigured, verifyAutopayReturn } from "@/lib/autopay";
 import { Button } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Potwierdzenie zamówienia",
 };
 
-// Status płatności zmienia się po webhooku P24 — strona nie może być statyczna
+// Status płatności zmienia się po komunikacie ITN Autopay — strona nie może być statyczna.
 export const dynamic = "force-dynamic";
 
 interface ConfirmationPageProps {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{
+    order?: string;
+    ServiceID?: string;
+    OrderID?: string;
+    Hash?: string;
+  }>;
 }
 
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
   const params = await searchParams;
-  const orderNumber = params.order;
+  // Własny link używa `order`. Powrót z Autopay jest podpisany i używa nazw
+  // parametrów z wielką literą. Nie ufamy OrderID bez poprawnego hasha.
+  const isValidAutopayReturn =
+    isAutopayConfigured() &&
+    verifyAutopayReturn({
+      serviceId: params.ServiceID,
+      orderId: params.OrderID,
+      hash: params.Hash,
+    });
+  const orderNumber = isValidAutopayReturn ? params.OrderID : params.order;
 
   // Pokazujemy wyłącznie status — dane osobowe zamówienia nie są tu dostępne
   const order = orderNumber

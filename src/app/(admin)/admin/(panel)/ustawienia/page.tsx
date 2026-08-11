@@ -8,13 +8,14 @@ interface Settings {
   storeName: string;
   storeEmail: string;
   storePhone: string;
+  showFreeShippingBanner: boolean;
   freeShippingThreshold: number;
   defaultShippingCost: number;
 }
 
 interface Integrations {
-  p24Configured: boolean;
-  p24Sandbox: boolean;
+  autopayConfigured: boolean;
+  autopaySandbox: boolean;
   emailConfigured: boolean;
 }
 
@@ -28,12 +29,13 @@ export default function AdminSettingsPage() {
     storeName: "",
     storeEmail: "",
     storePhone: "",
+    showFreeShippingBanner: true,
     freeShippingThreshold: 200,
     defaultShippingCost: 15,
   });
   const [integrations, setIntegrations] = useState<Integrations>({
-    p24Configured: false,
-    p24Sandbox: true,
+    autopayConfigured: false,
+    autopaySandbox: true,
     emailConfigured: false,
   });
 
@@ -64,10 +66,10 @@ export default function AdminSettingsPage() {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     setSettings((prev) => ({
       ...prev,
-      [name]: type === "number" ? Number(value) : value,
+      [name]: type === "checkbox" ? checked : type === "number" ? Number(value) : value,
     }));
     setMessage(null);
   };
@@ -274,6 +276,25 @@ export default function AdminSettingsPage() {
               />
             </div>
 
+            <label className="flex items-start gap-3 rounded-lg border border-border bg-background p-4 cursor-pointer">
+              <input
+                type="checkbox"
+                name="showFreeShippingBanner"
+                checked={settings.showFreeShippingBanner}
+                onChange={handleChange}
+                className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span>
+                <span className="block text-sm font-medium text-foreground">
+                  Pokazuj banner „Darmowa dostawa od … zł”
+                </span>
+                <span className="block mt-1 text-sm text-muted">
+                  Wyłączenie ukrywa tylko górny pasek. Próg darmowej dostawy nadal
+                  obowiązuje w koszyku i przy składaniu zamówienia.
+                </span>
+              </span>
+            </label>
+
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 <strong>Wskazówka:</strong> Klienci zobaczą informację o darmowej dostawie
@@ -287,13 +308,13 @@ export default function AdminSettingsPage() {
         {activeTab === "payments" && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Przelewy24
+              Autopay
             </h2>
 
             <IntegrationStatus
-              ok={integrations.p24Configured}
+              ok={integrations.autopayConfigured}
               okLabel={
-                integrations.p24Sandbox
+                integrations.autopaySandbox
                   ? "Skonfigurowane — TRYB TESTOWY (sandbox)"
                   : "Skonfigurowane — tryb produkcyjny"
               }
@@ -302,9 +323,9 @@ export default function AdminSettingsPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Info:</strong> Klucze Przelewy24 (Merchant ID, CRC, klucz API) są —
+                <strong>Info:</strong> Identyfikator serwisu i klucz współdzielony Autopay są —
                 ze względów bezpieczeństwa — konfigurowane w pliku <code>.env</code> na
-                serwerze, a nie w panelu. Dane znajdziesz w panelu Przelewy24; po zmianie
+                serwerze, a nie w panelu. Dane znajdziesz w portalu Autopay; po zmianie
                 pliku <code>.env</code> należy zrestartować aplikację.
               </p>
             </div>

@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { Instagram, Mail } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { ContactForm } from "@/components/shop/ContactForm";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -64,64 +64,7 @@ export default function ContactPage() {
               Napisz do mnie
             </h2>
 
-            <form className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input label="Imię" placeholder="Jan" required />
-                <Input label="Nazwisko" placeholder="Kowalski" required />
-              </div>
-
-              <Input
-                type="email"
-                label="Email"
-                placeholder="jan@example.com"
-                required
-              />
-
-              <Input
-                label="Temat"
-                placeholder="W czym możemy pomóc?"
-                required
-              />
-
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Wiadomość
-                </label>
-                <textarea
-                  id="message"
-                  rows={5}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-muted"
-                  placeholder="Twoja wiadomość..."
-                  required
-                />
-              </div>
-
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="privacy"
-                  className="mt-1 rounded text-primary focus:ring-primary"
-                  required
-                />
-                <label
-                  htmlFor="privacy"
-                  className="ml-2 text-sm text-muted"
-                >
-                  Akceptuję{" "}
-                  <a href="/prywatnosc" className="text-primary hover:underline">
-                    politykę prywatności
-                  </a>{" "}
-                  i wyrażam zgodę na przetwarzanie moich danych osobowych.
-                </label>
-              </div>
-
-              <Button type="submit" className="w-full" size="lg">
-                Wyślij wiadomość
-              </Button>
-            </form>
+            <ContactForm />
           </div>
         </div>
       </div>

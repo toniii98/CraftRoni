@@ -293,7 +293,9 @@ export default async function OrderDetailPage({
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Metoda</span>
                 <span className="text-foreground">
-                  {order.paymentMethod || "Przy odbiorze"}
+                  {order.paymentMethod === "autopay"
+                    ? "Autopay"
+                    : order.paymentMethod || "Do ustalenia"}
                 </span>
               </div>
               {order.paymentId && (

@@ -203,7 +203,7 @@ export function CartPageClient() {
 
             <div className="mt-4 text-center">
               <p className="text-xs text-muted">
-                Bezpieczne płatności przez Przelewy24
+                Bezpieczne płatności przez Autopay
               </p>
             </div>
 
