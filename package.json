@@ -21,7 +21,7 @@
     "orders:expire": "tsx prisma/expire-orders.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jose": "^6.1.3",
