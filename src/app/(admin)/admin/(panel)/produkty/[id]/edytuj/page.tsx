@@ -21,6 +21,7 @@ interface Product {
   salePrice: number | null;
   sku: string | null;
   stock: number;
+  stockVersion: number;
   categoryId: string;
   isActive: boolean;
   isFeatured: boolean;
@@ -35,6 +36,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<ProductImageInput[]>([]);
+  const [stockVersion, setStockVersion] = useState(0);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -66,6 +68,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         const categoriesData = await categoriesRes.json();
 
         const product: Product = productData.product;
+        setStockVersion(product.stockVersion);
         
         setFormData({
           name: product.name,
@@ -138,6 +141,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           price: parseFloat(formData.price),
           salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
           stock: parseInt(formData.stock),
+          expectedStockVersion: stockVersion,
           images,
         }),
       });

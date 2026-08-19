@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { generateOrderNumber } from "@/lib/utils";
 import { createOrderSchema, firstZodMessage } from "@/lib/validation";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { getShopSettings } from "@/lib/settings";
 import { isAutopayConfigured } from "@/lib/autopay";
+import { isCheckoutEnabled, publicAppOrigin } from "@/lib/runtime-env";
+import {
+  checkoutRequestHash,
+  derivePaymentAccessToken,
+  generateOrderNumber,
+  hashCheckoutKey,
+  isValidCheckoutKey,
+  MAX_QUANTITY_PER_PRODUCT,
+  MAX_ORDER_TOTAL_PLN,
+  MAX_TOTAL_QUANTITY,
+  paymentValidityTime,
+  reservationExpiry,
+  TERMS_VERSION,
+} from "@/lib/order-security";
+import { readJsonWithLimit, RequestSecurityError } from "@/lib/request-security";
+import { releaseExpiredReservations } from "@/lib/order-state";
 import {
   sendOrderConfirmationEmail,
   sendNewOrderNotification,
@@ -14,10 +29,103 @@ import {
 
 class OrderError extends Error {}
 
-// POST /api/orders - Tworzenie nowego zamówienia
+function orderResponse(order: { orderNumber: string }, paymentAccessToken: string) {
+  const paymentUrl = paymentStartPath(order.orderNumber, paymentAccessToken);
+  return NextResponse.json(
+    {
+      success: true,
+      data: {
+        orderNumber: order.orderNumber,
+        paymentUrl,
+      },
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
+}
+
+function paymentStartPath(orderNumber: string, paymentAccessToken: string): string {
+  const query = new URLSearchParams({ order: orderNumber, token: paymentAccessToken });
+  return `/api/payments/autopay/start?${query.toString()}`;
+}
+
+function replayOrderResponse(
+  order: {
+    orderNumber: string;
+    status: string;
+    checkoutRequestHash: string | null;
+    reservationExpiresAt: Date | null;
+    stockReleasedAt: Date | null;
+  },
+  paymentAccessToken: string,
+  requestHash: string
+) {
+  if (order.checkoutRequestHash !== requestHash) {
+    return NextResponse.json(
+      { success: false, error: "Ten klucz checkoutu został użyty dla innych danych" },
+      { status: 409, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const reservationInactive =
+    order.status === "CANCELLED" ||
+    Boolean(order.stockReleasedAt) ||
+    (order.status === "PENDING" &&
+      (!order.reservationExpiresAt || order.reservationExpiresAt <= new Date()));
+  if (reservationInactive) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Poprzednia rezerwacja wygasła. Wyślij zamówienie ponownie.",
+      },
+      { status: 409, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  if (
+    order.status === "PENDING" &&
+    order.reservationExpiresAt &&
+    paymentValidityTime(order.reservationExpiresAt) <= new Date()
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Okno płatności minęło, ale nadal czekamy na końcowe potwierdzenie. Nie wysyłaj ponownie płatności.",
+      },
+      { status: 425, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  return orderResponse(order, paymentAccessToken);
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return Boolean(
+    error && typeof error === "object" && "code" in error && error.code === "P2002"
+  );
+}
+
+// POST /api/orders - utworzenie jednej, czasowej rezerwacji magazynu.
 export async function POST(request: NextRequest) {
+  let checkoutKeyHash = "";
+  let requestHash = "";
+  let checkoutKey = "";
+  let paymentAccessToken = "";
+
   try {
-    // Ochrona przed spamem zamówień: 10 zamówień na godzinę z jednego IP
+    if (!isCheckoutEnabled()) {
+      return NextResponse.json(
+        { success: false, error: "Składanie zamówień jest tymczasowo wyłączone" },
+        { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+    if (!isAutopayConfigured()) {
+      return NextResponse.json(
+        { success: false, error: "Płatności online nie są jeszcze skonfigurowane" },
+        { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
     const limit = rateLimit(`orders:${clientIp(request)}`, 10, 60 * 60 * 1000);
     if (!limit.ok) {
       return NextResponse.json(
@@ -26,7 +134,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json().catch(() => null);
+    checkoutKey = request.headers.get("idempotency-key")?.trim() || "";
+    if (!isValidCheckoutKey(checkoutKey)) {
+      return NextResponse.json(
+        { success: false, error: "Brak prawidłowego klucza idempotencji checkoutu" },
+        { status: 400 }
+      );
+    }
+
+    const body = await readJsonWithLimit<unknown>(request, 64 * 1024);
     const parsed = createOrderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -35,27 +151,49 @@ export async function POST(request: NextRequest) {
       );
     }
     const input = parsed.data;
+    checkoutKeyHash = hashCheckoutKey(checkoutKey);
+    requestHash = checkoutRequestHash(input);
+    paymentAccessToken = derivePaymentAccessToken(checkoutKeyHash);
 
-    // Scal zduplikowane pozycje (ten sam produkt dodany wielokrotnie)
+    // Sprzątanie jest oportunistyczne; produkcja uruchamia też orders:expire z crona.
+    await releaseExpiredReservations(25).catch((error) => {
+      console.error("Nie udało się oportunistycznie wygasić rezerwacji", error);
+    });
+
+    const previous = await prisma.order.findUnique({ where: { checkoutKeyHash } });
+    if (previous) {
+      return replayOrderResponse(previous, paymentAccessToken, requestHash);
+    }
+
     const quantities = new Map<string, number>();
     for (const item of input.items) {
       quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
     }
+    const totalQuantity = [...quantities.values()].reduce((sum, quantity) => sum + quantity, 0);
+    if (
+      totalQuantity > MAX_TOTAL_QUANTITY ||
+      [...quantities.values()].some((quantity) => quantity > MAX_QUANTITY_PER_PRODUCT)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Przekroczono dozwoloną liczbę sztuk w zamówieniu" },
+        { status: 400 }
+      );
+    }
+
     const productIds = [...quantities.keys()];
-
     const settings = await getShopSettings();
-
-    // Zalogowany klient — zamówienie trafi do historii jego konta.
-    // Goście zamawiają bez konta (userId = null).
     const session = await getSession();
+    const expiresAt = reservationExpiry();
 
-    // Cała operacja w transakcji: weryfikacja produktów, zdjęcie stanu
-    // magazynowego i utworzenie zamówienia — wszystko albo nic.
     const order = await prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
-        where: { id: { in: productIds }, isActive: true },
+        where: {
+          id: { in: productIds },
+          isActive: true,
+          category: { isActive: true },
+        },
+        orderBy: { id: "asc" },
       });
-
       if (products.length !== productIds.length) {
         throw new OrderError("Niektóre produkty nie są już dostępne");
       }
@@ -67,24 +205,28 @@ export async function POST(request: NextRequest) {
         const salePrice = product.salePrice ? Number(product.salePrice) : null;
         const unitPrice = salePrice && salePrice < price ? salePrice : price;
         subtotal += unitPrice * quantity;
-
-        return {
-          productId: product.id,
-          quantity,
-          price: unitPrice,
-          name: product.name,
-        };
+        return { productId: product.id, quantity, price: unitPrice, name: product.name };
       });
 
-      // Zdejmij stan magazynowy — warunek `stock >= quantity` chroni przed
-      // sprzedaniem tej samej sztuki dwóm osobom naraz.
       for (const item of orderItems) {
+        const snapshot = products.find((product) => product.id === item.productId)!;
         const updated = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+            stockVersion: snapshot.stockVersion,
+            isActive: true,
+            category: { isActive: true },
+          },
+          data: {
+            stock: { decrement: item.quantity },
+            stockVersion: { increment: 1 },
+          },
         });
-        if (updated.count === 0) {
-          throw new OrderError(`Produkt "${item.name}" nie jest dostępny w żądanej ilości`);
+        if (updated.count !== 1) {
+          throw new OrderError(
+            `Produkt "${item.name}" został w międzyczasie zmieniony lub nie jest dostępny`
+          );
         }
       }
 
@@ -92,12 +234,20 @@ export async function POST(request: NextRequest) {
       const shippingCost =
         subtotal >= settings.freeShippingThreshold ? 0 : settings.defaultShippingCost;
       const total = Math.round((subtotal + shippingCost) * 100) / 100;
+      if (!Number.isFinite(total) || total > MAX_ORDER_TOTAL_PLN) {
+        throw new OrderError("Wartość zamówienia przekracza obsługiwany limit");
+      }
 
       return tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
           userId: session?.userId ?? null,
-          customerEmail: input.customerEmail,
+          checkoutKeyHash,
+          checkoutRequestHash: requestHash,
+          reservationExpiresAt: expiresAt,
+          termsAcceptedAt: new Date(),
+          termsVersion: TERMS_VERSION,
+          customerEmail: input.customerEmail.trim().toLowerCase(),
           customerName: input.customerName,
           customerPhone: input.customerPhone || null,
           shippingAddress: input.shippingAddress,
@@ -108,98 +258,43 @@ export async function POST(request: NextRequest) {
           shippingCost,
           total,
           status: "PENDING",
-          paymentMethod: isAutopayConfigured() ? "autopay" : null,
+          paymentMethod: "autopay",
           items: { create: orderItems },
+          statusEvents: {
+            create: {
+              toStatus: "PENDING",
+              actorType: session ? "CUSTOMER" : "GUEST",
+              actorId: session?.userId,
+              reason: "CHECKOUT_CREATED",
+            },
+          },
         },
         include: { items: true },
       });
     });
 
-    // Płatność online (Autopay) — podpisany formularz POST jest generowany na
-    // osobnej stronie przekierowania. Gdy integracja jest wyłączona, zamówienie
-    // pozostaje PENDING, a płatność można ustalić mailowo.
-    let paymentUrl = `/zamowienie/potwierdzenie?order=${encodeURIComponent(order.orderNumber)}`;
-    if (isAutopayConfigured()) {
-      paymentUrl = `/platnosc/autopay?order=${encodeURIComponent(order.orderNumber)}`;
-    }
-
-    // E-maile (nie blokują odpowiedzi w razie błędu — obsługa wewnątrz lib/email)
-    const emailData = toOrderEmailData(order);
-    await Promise.all([
-      sendOrderConfirmationEmail(emailData),
-      sendNewOrderNotification(emailData),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        orderNumber: order.orderNumber,
-        paymentUrl,
-      },
-    });
+    const emailData = {
+      ...toOrderEmailData(order),
+      paymentUrl: `${publicAppOrigin()}${paymentStartPath(order.orderNumber, paymentAccessToken)}`,
+    };
+    await Promise.all([sendOrderConfirmationEmail(emailData), sendNewOrderNotification(emailData)]);
+    return orderResponse(order, paymentAccessToken);
   } catch (error) {
+    if (isUniqueConstraintError(error) && checkoutKeyHash) {
+      const previous = await prisma.order.findUnique({ where: { checkoutKeyHash } });
+      if (previous) {
+        return replayOrderResponse(previous, paymentAccessToken, requestHash);
+      }
+    }
+    if (error instanceof RequestSecurityError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
+    }
     if (error instanceof OrderError) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
     console.error("Error creating order:", error);
     return NextResponse.json(
       { success: false, error: "Nie udało się utworzyć zamówienia" },
-      { status: 500 }
-    );
-  }
-}
-
-// GET /api/orders?orderNumber=...&email=... - Szczegóły zamówienia
-// Wymaga podania e-maila zamawiającego — sam numer zamówienia (widoczny
-// np. w przekazanym linku) nie wystarcza do odczytu danych osobowych.
-export async function GET(request: NextRequest) {
-  try {
-    const limit = rateLimit(`order-lookup:${clientIp(request)}`, 30, 60 * 60 * 1000);
-    if (!limit.ok) {
-      return NextResponse.json(
-        { success: false, error: "Zbyt wiele zapytań. Spróbuj ponownie później." },
-        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const orderNumber = searchParams.get("orderNumber");
-    const email = searchParams.get("email")?.trim().toLowerCase();
-
-    if (!orderNumber || !email) {
-      return NextResponse.json(
-        { success: false, error: "Wymagany numer zamówienia i adres email" },
-        { status: 400 }
-      );
-    }
-
-    const order = await prisma.order.findUnique({
-      where: { orderNumber },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: { where: { isPrimary: true }, take: 1 },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!order || order.customerEmail.toLowerCase() !== email) {
-      return NextResponse.json(
-        { success: false, error: "Zamówienie nie zostało znalezione" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ success: true, data: order });
-  } catch (error) {
-    console.error("Error fetching order:", error);
-    return NextResponse.json(
-      { success: false, error: "Nie udało się pobrać zamówienia" },
       { status: 500 }
     );
   }

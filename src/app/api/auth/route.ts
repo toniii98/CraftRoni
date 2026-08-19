@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { login, deleteSession } from "@/lib/auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { loginSchema, firstZodMessage } from "@/lib/validation";
+import {
+  assertSameOrigin,
+  readJsonWithLimit,
+  RequestSecurityError,
+} from "@/lib/request-security";
 
 export async function POST(request: Request) {
   try {
@@ -13,17 +19,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const { email, password } = body;
-
-    if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
-      return NextResponse.json(
-        { error: "Email i hasło są wymagane" },
-        { status: 400 }
-      );
+    const body = await readJsonWithLimit<unknown>(request, 16 * 1024);
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
     }
 
-    const result = await login(email, password);
+    const result = await login(parsed.data.email, parsed.data.password);
 
     if (!result.success) {
       return NextResponse.json(
@@ -34,6 +36,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof RequestSecurityError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Błąd logowania:", error);
     return NextResponse.json(
       { error: "Wystąpił błąd serwera" },
@@ -42,11 +47,15 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
+    assertSameOrigin(request);
     await deleteSession();
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof RequestSecurityError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Błąd wylogowania:", error);
     return NextResponse.json(
       { error: "Wystąpił błąd serwera" },

@@ -4,7 +4,9 @@ import {
   calculateAutopayHash,
   createAutopayItnConfirmation,
   createAutopayPaymentForm,
+  getAutopayConfig,
   parseAutopayItn,
+  parseAutopayPaymentDate,
   verifyAutopayItn,
   verifyAutopayReturn,
   type AutopayConfig,
@@ -26,11 +28,13 @@ test("oblicza hash startu transakcji zgodny z przykładem Autopay", () => {
 });
 
 test("buduje podpisany formularz paywallu w wymaganej kolejności", () => {
+  const expiresAt = new Date("2030-08-18T10:00:00.000Z");
   const payment = createAutopayPaymentForm(
     {
       orderNumber: "CR-260811-ABC123",
       totalPln: 149.9,
       customerEmail: "klient@example.com",
+      reservationExpiresAt: expiresAt,
     },
     config
   );
@@ -46,16 +50,28 @@ test("buduje podpisany formularz paywallu w wymaganej kolejności", () => {
       GatewayID: "0",
       Currency: "PLN",
       CustomerEmail: "klient@example.com",
+      ValidityTime: payment.fields.ValidityTime,
       Hash: undefined,
     }
   );
   assert.equal(
     payment.fields.Hash,
     calculateAutopayHash(
-      ["2", "CR-260811-ABC123", "149.90", "Zamowienie CR-260811-ABC123", "0", "PLN", "klient@example.com"],
+      [
+        "2",
+        "CR-260811-ABC123",
+        "149.90",
+        "Zamowienie CR-260811-ABC123",
+        "0",
+        "PLN",
+        "klient@example.com",
+        payment.fields.ValidityTime,
+      ],
       config.sharedKey
     )
   );
+  assert.match(payment.fields.ValidityTime, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  assert.equal(payment.fields.ValidityTime, "2030-08-18 11:00:00");
 });
 
 test("weryfikuje podpis powrotu klienta", () => {
@@ -63,7 +79,33 @@ test("weryfikuje podpis powrotu klienta", () => {
   const hash = calculateAutopayHash([config.serviceId, orderId], config.sharedKey);
 
   assert.equal(verifyAutopayReturn({ serviceId: "2", orderId, hash }, config), true);
+  assert.equal(verifyAutopayReturn({ serviceId: "2", orderId, hash: `${hash}0` }, config), false);
   assert.equal(verifyAutopayReturn({ serviceId: "2", orderId, hash: `${hash}00` }, config), false);
+});
+
+test("blokuje konfigurację sandbox w produkcji", () => {
+  const previous = {
+    appEnv: process.env.APP_ENV,
+    serviceId: process.env.AUTOPAY_SERVICE_ID,
+    sharedKey: process.env.AUTOPAY_SHARED_KEY,
+    sandbox: process.env.AUTOPAY_SANDBOX,
+  };
+  process.env.APP_ENV = "production";
+  process.env.AUTOPAY_SERVICE_ID = "2";
+  process.env.AUTOPAY_SHARED_KEY = "test-key";
+  process.env.AUTOPAY_SANDBOX = "true";
+  try {
+    assert.throws(() => getAutopayConfig(), /zabronione/);
+  } finally {
+    if (previous.appEnv === undefined) delete process.env.APP_ENV;
+    else process.env.APP_ENV = previous.appEnv;
+    if (previous.serviceId === undefined) delete process.env.AUTOPAY_SERVICE_ID;
+    else process.env.AUTOPAY_SERVICE_ID = previous.serviceId;
+    if (previous.sharedKey === undefined) delete process.env.AUTOPAY_SHARED_KEY;
+    else process.env.AUTOPAY_SHARED_KEY = previous.sharedKey;
+    if (previous.sandbox === undefined) delete process.env.AUTOPAY_SANDBOX;
+    else process.env.AUTOPAY_SANDBOX = previous.sandbox;
+  }
 });
 
 test("parsuje i weryfikuje ITN oraz tworzy podpisane potwierdzenie", () => {
@@ -84,6 +126,7 @@ test("parsuje i weryfikuje ITN oraz tworzy podpisane potwierdzenie", () => {
   const notification = parseAutopayItn(Buffer.from(xml, "utf8").toString("base64"));
   assert.equal(notification.remoteId, "REMOTE-123");
   assert.equal(notification.paymentStatus, "SUCCESS");
+  assert.equal(parseAutopayPaymentDate(notification.paymentDate).toISOString(), "2026-08-11T11:30:45.000Z");
   assert.equal(verifyAutopayItn(notification, config), true);
 
   const confirmation = createAutopayItnConfirmation(notification, "CONFIRMED", config);
@@ -94,6 +137,10 @@ test("parsuje i weryfikuje ITN oraz tworzy podpisane potwierdzenie", () => {
       `<hash>${calculateAutopayHash(["2", "CR-260811-ABC123", "CONFIRMED"], config.sharedKey)}</hash>`
     )
   );
+});
+
+test("odrzuca nieistniejącą datę ITN", () => {
+  assert.throws(() => parseAutopayPaymentDate("20260230123045"), /data ITN/);
 });
 
 test("odrzuca XML z deklaracją DTD", () => {

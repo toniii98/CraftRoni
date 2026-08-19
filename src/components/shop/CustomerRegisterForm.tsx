@@ -1,35 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertCircle, UserPlus } from "lucide-react";
+import { AlertCircle, MailCheck, UserPlus } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 
 export function CustomerRegisterForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
-    password: "",
-    repeatPassword: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (formData.password !== formData.repeatPassword) {
-      setError("Hasła nie są identyczne");
-      return;
-    }
-    if (!termsAccepted) {
-      setError("Akceptacja regulaminu jest wymagana");
-      return;
-    }
 
     setIsLoading(true);
 
@@ -38,10 +24,7 @@ export function CustomerRegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.name,
           email: formData.email,
-          password: formData.password,
-          termsAccepted,
         }),
       });
 
@@ -53,13 +36,30 @@ export function CustomerRegisterForm() {
         return;
       }
 
-      router.push("/konto");
-      router.refresh();
+      setSubmitted(true);
     } catch {
       setError("Wystąpił błąd. Spróbuj ponownie.");
       setIsLoading(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center sm:p-8">
+        <MailCheck className="mx-auto h-10 w-10 text-green-700" />
+        <h2 className="mt-4 text-xl font-bold text-foreground">Sprawdź swoją pocztę</h2>
+        <p className="mt-2 text-muted">
+          Jeśli adres może zostać użyty, wysłaliśmy link aktywacyjny ważny przez 24 godziny.
+        </p>
+        <Link
+          href="/konto/logowanie"
+          className="mt-5 inline-block text-primary underline underline-offset-4"
+        >
+          Przejdź do logowania
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface rounded-xl border border-border p-6 sm:p-8">
@@ -72,15 +72,6 @@ export function CustomerRegisterForm() {
         )}
 
         <Input
-          label="Imię i nazwisko"
-          autoComplete="name"
-          required
-          minLength={2}
-          value={formData.name}
-          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          placeholder="Jan Kowalski"
-        />
-        <Input
           label="Adres email"
           type="email"
           autoComplete="email"
@@ -89,49 +80,6 @@ export function CustomerRegisterForm() {
           onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
           placeholder="twoj@email.pl"
         />
-        <Input
-          label="Hasło (min. 8 znaków)"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-          value={formData.password}
-          onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-          placeholder="••••••••"
-        />
-        <Input
-          label="Powtórz hasło"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-          value={formData.repeatPassword}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, repeatPassword: e.target.value }))
-          }
-          placeholder="••••••••"
-        />
-
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
-          />
-          <span className="text-sm text-muted">
-            Akceptuję{" "}
-            <Link href="/regulamin" target="_blank" className="text-primary underline underline-offset-4">
-              regulamin sklepu
-            </Link>{" "}
-            i{" "}
-            <Link href="/prywatnosc" target="_blank" className="text-primary underline underline-offset-4">
-              politykę prywatności
-            </Link>{" "}
-            *
-          </span>
-        </label>
-
         <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
           <UserPlus className="h-4 w-4 mr-2" />
           {isLoading ? "Tworzenie konta..." : "Załóż konto"}

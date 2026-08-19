@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createPasswordResetToken } from "@/lib/auth";
 import { sendPasswordResetEmail, isEmailConfigured } from "@/lib/email";
 import { passwordResetRequestSchema, firstZodMessage } from "@/lib/validation";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { readJsonWithLimit, RequestSecurityError } from "@/lib/request-security";
+import { publicAppOrigin } from "@/lib/runtime-env";
 
 // POST /api/auth/password-reset - Prośba o link do zresetowania hasła
 //
@@ -25,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json().catch(() => null);
+    const body = await readJsonWithLimit<unknown>(request, 16 * 1024);
     const parsed = passwordResetRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
@@ -37,22 +39,31 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email } });
+    const appUrl = publicAppOrigin();
 
-    // Reset dotyczy kont klientów; hasło administratora zmienia się w panelu
-    if (user && user.role === "CUSTOMER") {
-      const token = await createPasswordResetToken(user.id);
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-      await sendPasswordResetEmail({
-        to: user.email,
-        name: user.name,
-        resetUrl: `${appUrl}/konto/reset-hasla/${token}`,
-      });
-    }
+    // Lookup i SMTP odbywają się po wysłaniu identycznej odpowiedzi. Czas
+    // odpowiedzi nie zdradza, czy konto o podanym adresie istnieje.
+    after(async () => {
+      try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        // Reset dotyczy kont klientów; hasło administratora zmienia się w panelu.
+        if (!user || user.role !== "CUSTOMER") return;
+        const token = await createPasswordResetToken(user.id);
+        await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetUrl: `${appUrl}/konto/reset-hasla/${token}`,
+        });
+      } catch {
+        console.error("[password-reset] Nie udało się przygotować wiadomości");
+      }
+    });
 
     return genericResponse;
   } catch (error) {
+    if (error instanceof RequestSecurityError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Błąd żądania resetu hasła:", error);
     // Także tutaj nie zdradzamy szczegółów
     return genericResponse;

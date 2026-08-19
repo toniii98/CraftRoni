@@ -1,0 +1,62 @@
+name: Quality and security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      NODE_ENV: production
+      APP_ENV: staging
+      CHECKOUT_ENABLED: "false"
+      AUTH_SECRET: ci-only-auth-secret-with-at-least-32-randomish-bytes
+      PAYMENT_ACCESS_SECRET: ci-only-payment-secret-distinct-and-at-least-32-bytes
+      NEXT_PUBLIC_APP_URL: https://staging.invalid
+      DATABASE_URL: mysql://validation:validation@127.0.0.1:65535/craftroni_validation
+      AUTOPAY_SANDBOX: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Node.js 24
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Clean install without dependency lifecycle scripts
+        run: npm ci --ignore-scripts --include=dev
+
+      - name: Generate Prisma client
+        run: npx --no-install prisma generate
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Unit tests
+        run: npm test
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify deployable Next.js artifact
+        run: test -s .next/BUILD_ID

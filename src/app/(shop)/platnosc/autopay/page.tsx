@@ -1,7 +1,15 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { createAutopayPaymentForm, isAutopayConfigured } from "@/lib/autopay";
+import {
+  isValidPaymentAccessToken,
+  PAYMENT_ACCESS_COOKIE,
+  paymentValidityTime,
+  verifyPaymentAccessToken,
+} from "@/lib/order-security";
+import { isCheckoutEnabled } from "@/lib/runtime-env";
 import {
   AutopayRedirectForm,
   AutopayRedirectingMessage,
@@ -15,36 +23,53 @@ interface AutopayPaymentPageProps {
 
 export default async function AutopayPaymentPage({ searchParams }: AutopayPaymentPageProps) {
   const { order: orderNumber } = await searchParams;
+  const token = (await cookies()).get(PAYMENT_ACCESS_COOKIE)?.value;
 
-  if (!orderNumber) {
+  if (!orderNumber || !isValidPaymentAccessToken(token)) {
     redirect("/koszyk");
   }
 
   const order = await prisma.order.findUnique({
     where: { orderNumber },
     select: {
+      checkoutKeyHash: true,
       orderNumber: true,
       customerEmail: true,
       total: true,
       status: true,
       paidAt: true,
       paymentMethod: true,
+      reservationExpiresAt: true,
+      stockReleasedAt: true,
     },
   });
 
-  if (!order) {
+  if (
+    !order ||
+    !order.reservationExpiresAt ||
+    order.reservationExpiresAt <= new Date() ||
+    !verifyPaymentAccessToken(token, order.checkoutKeyHash)
+  ) {
     redirect("/koszyk");
   }
 
-  const confirmationUrl = `/zamowienie/potwierdzenie?order=${encodeURIComponent(order.orderNumber)}`;
+  const confirmationUrl = `/zamowienie/potwierdzenie?${new URLSearchParams({
+    order: order.orderNumber,
+  }).toString()}`;
   if (order.paidAt || order.status === "PAID") {
     redirect(confirmationUrl);
   }
 
+  const validityTime = order.reservationExpiresAt
+    ? paymentValidityTime(order.reservationExpiresAt)
+    : null;
   const canPay =
+    isCheckoutEnabled() &&
     isAutopayConfigured() &&
     order.paymentMethod === "autopay" &&
-    order.status === "PENDING";
+    order.status === "PENDING" &&
+    !order.stockReleasedAt &&
+    Boolean(validityTime && validityTime > new Date());
 
   if (!canPay) {
     redirect(confirmationUrl);
@@ -54,6 +79,7 @@ export default async function AutopayPaymentPage({ searchParams }: AutopayPaymen
     orderNumber: order.orderNumber,
     totalPln: Number(order.total),
     customerEmail: order.customerEmail,
+    reservationExpiresAt: validityTime || undefined,
   });
 
   return (

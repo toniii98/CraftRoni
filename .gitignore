@@ -31,14 +31,17 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files - TYLKO .env.example commitowany
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
 
 # NIE IGNORUJ .env.example!
 !.env.example
+
+# lokalne zrzuty i kopie danych
+/*.sql
+/*.dump
+/*.bak
+/*.db
+/backups/
 
 # vercel
 .vercel

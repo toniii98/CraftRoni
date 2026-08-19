@@ -11,8 +11,8 @@ interface ProductPageProps {
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   
-  const product = await prisma.product.findUnique({
-    where: { slug },
+  const product = await prisma.product.findFirst({
+    where: { slug, isActive: true, category: { isActive: true } },
     select: { name: true, description: true },
   });
   
@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   
-  const product = await prisma.product.findUnique({
-    where: { slug },
+  const product = await prisma.product.findFirst({
+    where: { slug, isActive: true, category: { isActive: true } },
     include: {
       category: true,
       images: {
@@ -51,6 +51,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       categoryId: product.categoryId,
       id: { not: product.id },
       isActive: true,
+      category: { isActive: true },
     },
     include: {
       category: true,

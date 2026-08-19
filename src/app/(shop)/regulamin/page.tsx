@@ -62,8 +62,10 @@ export default function RegulaminPage() {
             81-718 Sopot) — dostępne metody to m.in. BLIK, szybki przelew i karta płatnicza.
           </li>
           <li>
-            Zamówienie nieopłacone w terminie [UZUPEŁNIJ: np. 3 dni roboczych] od złożenia może
-            zostać anulowane.
+            Link płatniczy jest technicznie ważny przez 30 minut. Po dodatkowym 15-minutowym
+            okresie na doręczenie potwierdzenia płatności rezerwacja produktów może zostać
+            automatycznie zwolniona, a zamówienie anulowane. Płatność otrzymana po tym czasie
+            wymaga ręcznego uzgodnienia i może zostać zwrócona.
           </li>
         </ol>
       </section>

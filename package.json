@@ -2,18 +2,23 @@
   "name": "craftroni",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "test": "tsx --test src/lib/autopay.test.ts",
+    "test": "tsx --conditions=react-server --test src/lib/*.test.ts scripts/*.test.cjs",
+    "typecheck": "tsc --noEmit",
+    "env:check": "node scripts/validate-env.cjs",
     "start": "node server.cjs",
     "lint": "eslint",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "admin:create": "tsx prisma/create-admin.ts"
+    "admin:create": "tsx prisma/create-admin.ts",
+    "orders:expire": "tsx prisma/expire-orders.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
@@ -23,14 +28,15 @@
     "lucide-react": "^0.558.0",
     "next": "^16.3.0",
     "nodemailer": "^9.0.3",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "server-only": "0.0.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -42,5 +48,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.1"
   }
 }

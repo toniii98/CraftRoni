@@ -31,15 +31,20 @@ export default async function ShopPage({
   // Build where clause
   const where: Prisma.ProductWhereInput = {
     isActive: true,
+    category: { isActive: true },
   };
 
   // Filter by category
   if (params.kategoria) {
-    const category = await prisma.category.findUnique({
-      where: { slug: params.kategoria },
+    const category = await prisma.category.findFirst({
+      where: { slug: params.kategoria, isActive: true },
     });
     if (category) {
       where.categoryId = category.id;
+    } else {
+      // Nieaktywna lub nieistniejąca kategoria nie może przypadkiem wyświetlić
+      // całego katalogu po usunięciu filtra.
+      where.id = { in: [] };
     }
   }
 

@@ -23,7 +23,7 @@ export default async function HomePage() {
       take: 4,
     }),
     prisma.product.findMany({
-      where: { isActive: true, isFeatured: true },
+      where: { isActive: true, isFeatured: true, category: { isActive: true } },
       include: {
         category: true,
         images: { orderBy: { sortOrder: "asc" }, take: 1 },

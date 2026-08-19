@@ -16,10 +16,12 @@ import {
   Mail,
   Calendar,
   FileText,
-  ShoppingBag
+  ShoppingBag,
+  AlertTriangle
 } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { OrderStatusForm } from "./OrderStatusForm";
+import { PaymentReviewForm } from "./PaymentReviewForm";
 
 export const metadata: Metadata = {
   title: "Szczegóły zamówienia | Admin",
@@ -91,6 +93,24 @@ export default async function OrderDetailPage({
           email: true,
         },
       },
+      autopayTransactions: {
+        orderBy: { firstSeenAt: "desc" },
+      },
+      paymentReviews: {
+        include: {
+          autopayTransaction: {
+            select: {
+              remoteId: true,
+              serviceId: true,
+              amount: true,
+              currency: true,
+              status: true,
+              paymentDate: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -106,6 +126,7 @@ export default async function OrderDetailPage({
     productSlug: item.product?.slug || null,
     image: item.product?.images[0]?.url || null,
   }));
+  const openPaymentReviews = order.paymentReviews.filter((review) => !review.resolvedAt);
 
   return (
     <div>
@@ -133,6 +154,65 @@ export default async function OrderDetailPage({
           <StatusBadge status={order.status} />
         </div>
       </div>
+
+      {openPaymentReviews.length > 0 && (
+        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">
+                {openPaymentReviews.length === 1
+                  ? "Płatność wymaga ręcznego uzgodnienia"
+                  : `${openPaymentReviews.length} płatności wymaga osobnego uzgodnienia`}
+              </p>
+              <p className="text-sm mt-1">
+                Każdą sprawę porównaj z właściwym systemem płatności. Dla nowych
+                transakcji jest nim Autopay; sprawy oznaczone jako legacy wymagają
+                sprawdzenia źródła historycznego. Nie wysyłaj towaru ani nie oznaczaj
+                zwrotu przed weryfikacją identyfikatora.
+              </p>
+              <div className="mt-4 space-y-4">
+                {openPaymentReviews.map((review) => (
+                  <div key={review.id} className="rounded border border-amber-300 bg-white p-3">
+                    <p className="text-sm font-medium">
+                      {review.kind} · powód: {review.reason}
+                    </p>
+                    {(review.autopayTransaction?.remoteId || review.remoteId) && (
+                      <p className="mt-1 text-xs font-mono break-all">
+                        RemoteID: {review.autopayTransaction?.remoteId || review.remoteId}
+                      </p>
+                    )}
+                    {review.autopayTransaction && (
+                      <p className="mt-1 text-xs">
+                        Usługa {review.autopayTransaction.serviceId} ·{" "}
+                        {Number(review.autopayTransaction.amount).toFixed(2)}{" "}
+                        {review.autopayTransaction.currency} · {review.autopayTransaction.status} ·{" "}
+                        {review.autopayTransaction.paymentDate}
+                      </p>
+                    )}
+                    <PaymentReviewForm
+                      orderId={order.id}
+                      reviewCaseId={review.id}
+                      allowNoPaymentFound={
+                        review.kind === "LEGACY_RECONCILIATION" &&
+                        review.reason === "LEGACY_PENDING_REQUIRES_RECONCILIATION" &&
+                        !review.autopayTransactionId
+                      }
+                      canAcceptPayment={
+                        review.kind === "ITN_RECONCILIATION" &&
+                        Boolean(review.autopayTransactionId) &&
+                        ["PENDING", "CANCELLED"].includes(order.status)
+                      }
+                      currentStatus={order.status}
+                      currentVersion={order.version}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Order Items & Summary */}
@@ -310,6 +390,44 @@ export default async function OrderDetailPage({
                   <span className="text-foreground">{formatDate(order.paidAt)}</span>
                 </div>
               )}
+              {order.paymentReviews.filter((review) => review.resolvedAt).map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded border border-green-200 bg-green-50 p-2 text-xs text-green-900"
+                >
+                  <p>Rozstrzygnięcie: {review.resolution || "zarejestrowane"}</p>
+                  <p className="mt-1">
+                    {review.kind} · {review.reason} · {review.reference || "brak referencji"} ·{" "}
+                    {formatDate(review.resolvedAt!)}
+                  </p>
+                  <p className="mt-1 font-mono break-all">
+                    RemoteID: {review.autopayTransaction?.remoteId || review.remoteId || "legacy / brak"}
+                  </p>
+                  <p className="mt-1">Operator: {review.resolvedBy || "brak identyfikatora"}</p>
+                  {review.autopayTransaction && (
+                    <p className="mt-1">
+                      Usługa {review.autopayTransaction.serviceId} ·{" "}
+                      {Number(review.autopayTransaction.amount).toFixed(2)}{" "}
+                      {review.autopayTransaction.currency} · {review.autopayTransaction.paymentDate}
+                    </p>
+                  )}
+                </div>
+              ))}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Zarejestrowane transakcje</span>
+                <span className="text-foreground">{order.autopayTransactions.length}</span>
+              </div>
+              {order.autopayTransactions.map((payment) => (
+                <div key={payment.id} className="rounded border border-border p-2 text-xs">
+                  <div className="flex justify-between gap-2">
+                    <span className="font-mono break-all">{payment.remoteId}</span>
+                    <span>{payment.status}</span>
+                  </div>
+                  <div className="text-muted mt-1">
+                    {Number(payment.amount).toFixed(2)} {payment.currency}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -322,7 +440,12 @@ export default async function OrderDetailPage({
               </h2>
             </div>
             <div className="px-6 py-4">
-              <OrderStatusForm orderId={order.id} currentStatus={order.status} />
+              <OrderStatusForm
+                key={`${order.id}-${order.version}`}
+                orderId={order.id}
+                currentStatus={order.status}
+                currentVersion={order.version}
+              />
             </div>
           </div>
         </div>

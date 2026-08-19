@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Package, Eye, Truck, CheckCircle, Clock, XCircle, CreditCard, ShoppingBag } from "lucide-react";
+import { AlertTriangle, Package, Eye, Truck, CheckCircle, Clock, XCircle, CreditCard, ShoppingBag } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { OrderStatus, type Prisma } from "@prisma/client";
 
@@ -284,7 +284,15 @@ export default async function AdminOrdersPage({
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <StatusBadge status={order.status} />
+                        <div className="flex flex-col items-start gap-1.5">
+                          <StatusBadge status={order.status} />
+                          {order.paymentReviewRequired && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-800">
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              Sprawdź płatność
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-muted">
                         {order._count.items} szt.
