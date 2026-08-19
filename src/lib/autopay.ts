@@ -1,4 +1,6 @@
+import "server-only";
 import { createHash, timingSafeEqual } from "crypto";
+import { isProductionEnvironment } from "./runtime-env";
 
 // Integracja z bramką Płatności Online Autopay.
 // Dokumentacja: https://developers.autopay.pl/pdf?documentId=384
@@ -22,6 +24,7 @@ export interface AutopayStartParams {
   orderNumber: string;
   totalPln: number;
   customerEmail: string;
+  reservationExpiresAt?: Date;
 }
 
 export interface AutopayPaymentForm {
@@ -62,6 +65,17 @@ function gatewayUrlFromEnv(sandbox: boolean): string {
   if (url.protocol !== "https:") {
     throw new Error("AUTOPAY_GATEWAY_URL musi używać HTTPS");
   }
+  const expectedHost = sandbox ? "testpay.autopay.eu" : "pay.autopay.eu";
+  if (
+    url.hostname !== expectedHost ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error(`AUTOPAY_GATEWAY_URL musi wskazywać na ${expectedHost}`);
+  }
   return url.toString().replace(/\/$/, "");
 }
 
@@ -69,6 +83,10 @@ export function getAutopayConfig(): AutopayConfig {
   const serviceId = process.env.AUTOPAY_SERVICE_ID?.trim() || "";
   const sharedKey = process.env.AUTOPAY_SHARED_KEY || "";
   const sandbox = isAutopaySandbox();
+
+  if (isProductionEnvironment() && sandbox) {
+    throw new Error("AUTOPAY_SANDBOX=true jest zabronione w środowisku produkcyjnym");
+  }
 
   if (!/^\d{1,10}$/.test(serviceId)) {
     throw new Error("Brak lub nieprawidłowy AUTOPAY_SERVICE_ID");
@@ -109,7 +127,10 @@ export function calculateAutopayHash(
 }
 
 function safeHashEqual(actual: string, expected: string): boolean {
-  if (!/^[a-f\d]+$/i.test(actual) || !/^[a-f\d]+$/i.test(expected)) return false;
+  if (actual.length !== expected.length || !/^(?:[a-f\d]{64}|[a-f\d]{128})$/i.test(actual)) {
+    return false;
+  }
+  if (!/^(?:[a-f\d]{64}|[a-f\d]{128})$/i.test(expected)) return false;
   const actualBuffer = Buffer.from(actual.toLowerCase(), "hex");
   const expectedBuffer = Buffer.from(expected.toLowerCase(), "hex");
   return (
@@ -117,6 +138,23 @@ function safeHashEqual(actual: string, expected: string): boolean {
     actualBuffer.length > 0 &&
     timingSafeEqual(actualBuffer, expectedBuffer)
   );
+}
+
+function formatAutopayValidityTime(value: Date): string {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    // Dokumentacja operatora wymaga czasu CET (stałe UTC+1, również latem).
+    timeZone: "Etc/GMT-1",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((entry) => entry.type === type)?.value || "";
+  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}:${part("second")}`;
 }
 
 export function createAutopayPaymentForm(
@@ -143,6 +181,13 @@ export function createAutopayPaymentForm(
     CustomerEmail: params.customerEmail,
   };
 
+  if (params.reservationExpiresAt) {
+    if (params.reservationExpiresAt.getTime() <= Date.now()) {
+      throw new Error("Termin ważności płatności Autopay już minął");
+    }
+    fields.ValidityTime = formatAutopayValidityTime(params.reservationExpiresAt);
+  }
+
   fields.Hash = calculateAutopayHash(
     [
       fields.ServiceID,
@@ -152,6 +197,7 @@ export function createAutopayPaymentForm(
       fields.GatewayID,
       fields.Currency,
       fields.CustomerEmail,
+      fields.ValidityTime,
     ],
     config.sharedKey,
     config.hashAlgorithm
@@ -244,7 +290,7 @@ export function parseAutopayItn(encodedTransactions: string): AutopayItn {
   if (notification.gatewayId && !/^\d{1,5}$/.test(notification.gatewayId)) {
     throw new Error("Nieprawidłowe gatewayID");
   }
-  if (!/^\d{14}$/.test(notification.paymentDate)) throw new Error("Nieprawidłowa data ITN");
+  parseAutopayPaymentDate(notification.paymentDate);
   if (!/^(PENDING|SUCCESS|FAILURE)$/.test(notification.paymentStatus)) {
     throw new Error("Nieprawidłowy status ITN");
   }
@@ -256,6 +302,31 @@ export function parseAutopayItn(encodedTransactions: string): AutopayItn {
   }
 
   return notification;
+}
+
+/** Zamienia protokołowy czas CET (stałe UTC+1) na jednoznaczny instant UTC. */
+export function parseAutopayPaymentDate(value: string): Date {
+  if (!/^\d{14}$/.test(value)) throw new Error("Nieprawidłowa data ITN");
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(4, 6));
+  const day = Number(value.slice(6, 8));
+  const hour = Number(value.slice(8, 10));
+  const minute = Number(value.slice(10, 12));
+  const second = Number(value.slice(12, 14));
+  const instant = new Date(Date.UTC(year, month - 1, day, hour - 1, minute, second));
+  const cetView = new Date(instant.getTime() + 60 * 60 * 1000);
+
+  if (
+    cetView.getUTCFullYear() !== year ||
+    cetView.getUTCMonth() !== month - 1 ||
+    cetView.getUTCDate() !== day ||
+    cetView.getUTCHours() !== hour ||
+    cetView.getUTCMinutes() !== minute ||
+    cetView.getUTCSeconds() !== second
+  ) {
+    throw new Error("Nieprawidłowa data ITN");
+  }
+  return instant;
 }
 
 export function verifyAutopayItn(

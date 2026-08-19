@@ -33,6 +33,11 @@ export default function PrywatnoscPage() {
             <strong>Dane korespondencji</strong> (e-mail, treść wiadomości) — w celu obsługi
             zapytań i reklamacji (art. 6 ust. 1 lit. f RODO — prawnie uzasadniony interes).
           </li>
+          <li>
+            <strong>Dane konta</strong> (adres e-mail, imię i nazwisko, hash hasła, historia
+            zamówień oraz czas i wersja akceptacji regulaminu) — w celu utworzenia i obsługi
+            dobrowolnego konta klienta oraz zabezpieczenia dostępu (art. 6 ust. 1 lit. b i f RODO).
+          </li>
         </ul>
       </section>
 
@@ -53,6 +58,8 @@ export default function PrywatnoscPage() {
         <p>
           Dane zamówień przechowujemy przez okres wymagany przepisami podatkowymi (co do zasady
           5 lat od końca roku podatkowego). Dane korespondencji — do czasu zakończenia sprawy.
+          [UZUPEŁNIJ: okres przechowywania nieaktywnych kont, logów bezpieczeństwa i danych
+          technicznych oraz zasady anonimizacji/usunięcia].
         </p>
       </section>
 
@@ -73,18 +80,21 @@ export default function PrywatnoscPage() {
       <section>
         <h2>6. Pliki cookies i pamięć lokalna</h2>
         <p>
-          Sklep używa pamięci lokalnej przeglądarki (localStorage) wyłącznie do przechowywania
-          zawartości koszyka oraz niezbędnego pliku cookie sesji dla zalogowanych administratorów.
-          Są to mechanizmy technicznie niezbędne do działania sklepu — nie używamy ich do śledzenia
-          ani celów marketingowych. [UZUPEŁNIJ/ZAKTUALIZUJ, jeśli dodasz statystyki lub marketing —
-          wtedy wymagana jest zgoda i baner cookies.]
+          Sklep używa pamięci lokalnej przeglądarki (localStorage) do zawartości koszyka oraz
+          technicznego stanu ponowienia checkoutu. Niezbędne cookies obsługują sesje klienta i
+          administratora, krótkotrwały dostęp do płatności oraz dokończenie aktywacji e-mail.
+          Są to mechanizmy technicznie niezbędne do działania i ochrony sklepu — nie używamy ich
+          do śledzenia ani celów marketingowych. [UZUPEŁNIJ/ZAKTUALIZUJ, jeśli dodasz statystyki
+          lub marketing — wtedy może być wymagana zgoda i baner cookies.]
         </p>
       </section>
 
       <section>
         <h2>7. Dobrowolność podania danych</h2>
         <p>
-          Podanie danych jest dobrowolne, ale niezbędne do złożenia i realizacji zamówienia.
+          Podanie danych zamówienia jest dobrowolne, ale niezbędne do jego złożenia i realizacji.
+          Konto klienta jest opcjonalne; jego utworzenie wymaga potwierdzenia adresu e-mail,
+          podania nazwy oraz akceptacji regulaminu.
         </p>
       </section>
     </LegalPage>

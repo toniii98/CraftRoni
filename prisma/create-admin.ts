@@ -20,8 +20,14 @@ async function main() {
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     throw new Error("ADMIN_EMAIL nie jest poprawnym adresem e-mail.");
   }
+  if (email.length > 191) {
+    throw new Error("ADMIN_EMAIL jest za długi dla kolumny bazy danych.");
+  }
   if (password.length < 12) {
     throw new Error("ADMIN_PASSWORD musi mieć co najmniej 12 znaków.");
+  }
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    throw new Error("ADMIN_PASSWORD nie może przekraczać 72 bajtów UTF-8 (limit bcrypt).");
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -37,17 +43,18 @@ async function main() {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: existing.id },
-        data: { name, password: passwordHash },
+        data: { name, password: passwordHash, emailVerifiedAt: new Date() },
       }),
       prisma.session.deleteMany({ where: { userId: existing.id } }),
       prisma.passwordResetToken.deleteMany({ where: { userId: existing.id } }),
+      prisma.emailVerificationToken.deleteMany({ where: { userId: existing.id } }),
     ]);
     console.log(`Zaktualizowano administratora ${email} i unieważniono jego wcześniejsze sesje.`);
     return;
   }
 
   await prisma.user.create({
-    data: { email, name, password: passwordHash, role: "ADMIN" },
+    data: { email, name, password: passwordHash, role: "ADMIN", emailVerifiedAt: new Date() },
   });
   console.log(`Utworzono administratora ${email}. Hasło nie zostało wyświetlone.`);
 }

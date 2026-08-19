@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import { productUpdateSchema, firstZodMessage } from "@/lib/validation";
 import { deleteUploadedImages } from "@/lib/uploads";
 
+class ProductConflictError extends Error {}
+
 // GET /api/admin/products/[id] - Szczegóły produktu
 export async function GET(
   request: Request,
@@ -64,7 +66,7 @@ export async function PUT(
         { status: 400 }
       );
     }
-    const input = parsed.data;
+    const { expectedStockVersion, ...input } = parsed.data;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -119,8 +121,8 @@ export async function PUT(
 
     // Aktualizacja produktu i (opcjonalnie) podmiana obrazków w jednej transakcji
     await prisma.$transaction(async (tx) => {
-      await tx.product.update({
-        where: { id },
+      const updated = await tx.product.updateMany({
+        where: { id, stockVersion: expectedStockVersion },
         data: {
           name: input.name ?? undefined,
           slug: input.slug ?? undefined,
@@ -133,8 +135,14 @@ export async function PUT(
           categoryId: input.categoryId ?? undefined,
           isActive: input.isActive ?? undefined,
           isFeatured: input.isFeatured ?? undefined,
+          stockVersion: { increment: 1 },
         },
       });
+      if (updated.count !== 1) {
+        throw new ProductConflictError(
+          "Stan produktu zmienił się od otwarcia formularza. Odśwież stronę przed zapisem."
+        );
+      }
 
       if (input.images !== undefined) {
         await tx.productImage.deleteMany({ where: { productId: id } });
@@ -173,6 +181,9 @@ export async function PUT(
 
     return NextResponse.json({ product: updatedProduct });
   } catch (error) {
+    if (error instanceof ProductConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     console.error("Błąd aktualizacji produktu:", error);
     return NextResponse.json(
       { error: "Błąd aktualizacji produktu" },
@@ -215,7 +226,7 @@ export async function DELETE(
     if (orderItemCount > 0) {
       await prisma.product.update({
         where: { id },
-        data: { isActive: false },
+        data: { isActive: false, stockVersion: { increment: 1 } },
       });
       return NextResponse.json({
         success: true,

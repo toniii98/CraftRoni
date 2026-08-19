@@ -16,40 +16,124 @@ export interface OrderEmailData {
   subtotal: number;
   shippingCost: number;
   total: number;
+  paymentUrl?: string;
+}
+
+export interface SmtpConfig {
+  host: string;
+  port: 465 | 587;
+  from: string;
+  secure: boolean;
+  requireTLS: boolean;
+  auth?: { user: string; pass: string };
+}
+
+type EmailEnvironment = Readonly<Record<string, string | undefined>>;
+
+function trimmed(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function assertHeaderSafe(name: string, value: string) {
+  if (value.includes("\r") || value.includes("\n")) {
+    throw new Error(`${name} zawiera niedozwolony znak nowej linii`);
+  }
+}
+
+/** Parsuje konfigurację bez wykonywania połączenia SMTP. */
+export function smtpConfigFromEnvironment(
+  environment: EmailEnvironment = process.env
+): SmtpConfig | null {
+  const host = trimmed(environment.SMTP_HOST);
+  const from = trimmed(environment.SMTP_FROM);
+  const user = trimmed(environment.SMTP_USER);
+  const password = environment.SMTP_PASSWORD ?? "";
+
+  // Sam domyślny SMTP_PORT w pliku env nie oznacza włączonej poczty.
+  if (!host && !from && !user && !password) return null;
+
+  const rawPort = trimmed(environment.SMTP_PORT);
+  if (!host || !rawPort || !from) {
+    throw new Error("Niepełna konfiguracja SMTP: wymagane są SMTP_HOST, SMTP_PORT i SMTP_FROM");
+  }
+  if (Boolean(user) !== Boolean(password)) {
+    throw new Error("Niepełna konfiguracja SMTP: SMTP_USER i SMTP_PASSWORD muszą występować razem");
+  }
+
+  const port = Number(rawPort);
+  if (port !== 465 && port !== 587) {
+    throw new Error("SMTP_PORT musi mieć wartość 465 albo 587");
+  }
+  if (host.length > 255 || from.length > 320) {
+    throw new Error("Konfiguracja SMTP przekracza dozwoloną długość");
+  }
+  assertHeaderSafe("SMTP_HOST", host);
+  assertHeaderSafe("SMTP_FROM", from);
+  if (user) assertHeaderSafe("SMTP_USER", user);
+
+  return {
+    host,
+    port,
+    from,
+    secure: port === 465,
+    requireTLS: port === 587,
+    auth: user ? { user, pass: password } : undefined,
+  };
 }
 
 export function isEmailConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_FROM);
+  return smtpConfigFromEnvironment() !== null;
 }
 
 let transporter: Transporter | null = null;
+let transporterConfig: SmtpConfig | null = null;
 
-function getTransporter(): Transporter | null {
-  if (!isEmailConfigured()) return null;
+function getTransporter(): { transport: Transporter; config: SmtpConfig } | null {
+  const config = smtpConfigFromEnvironment();
+  if (!config) return null;
   if (!transporter) {
-    const port = Number(process.env.SMTP_PORT);
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure: port === 465,
-      auth: process.env.SMTP_USER
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-        : undefined,
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      requireTLS: config.requireTLS,
+      auth: config.auth,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
+      tls: {
+        minVersion: "TLSv1.2",
+        servername: config.host,
+      },
     });
+    transporterConfig = config;
   }
-  return transporter;
+  return { transport: transporter, config: transporterConfig ?? config };
+}
+
+function safeEmailError(error: unknown): Record<string, string | number> {
+  if (!error || typeof error !== "object") return { kind: "unknown" };
+
+  const details: Record<string, string | number> = {};
+  for (const key of ["code", "command", "responseCode"] as const) {
+    const value = (error as Record<string, unknown>)[key];
+    if (typeof value === "string" || typeof value === "number") details[key] = value;
+  }
+  return Object.keys(details).length > 0 ? details : { kind: "smtp-error" };
 }
 
 async function sendMail(to: string, subject: string, html: string): Promise<void> {
-  const transport = getTransporter();
-  if (!transport) {
-    console.warn(`[email] SMTP nieskonfigurowane — pomijam "${subject}" do ${to}`);
-    return;
-  }
   try {
-    await transport.sendMail({ from: process.env.SMTP_FROM, to, subject, html });
+    const smtp = getTransporter();
+    if (!smtp) {
+      console.warn("[email] SMTP nieskonfigurowane — wiadomość pominięta");
+      return;
+    }
+    await smtp.transport.sendMail({ from: smtp.config.from, to, subject, html });
   } catch (error) {
-    console.error(`[email] Błąd wysyłki "${subject}" do ${to}:`, error);
+    // Nie logujemy odbiorcy, tematu, treści ani komunikatu serwera SMTP, bo mogą
+    // zawierać dane osobowe. Kody wystarczają do diagnozy klasy błędu.
+    console.error("[email] Wysyłka nie powiodła się", safeEmailError(error));
   }
 }
 
@@ -138,6 +222,11 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData): Promise
     <p>Poniżej podsumowanie:</p>
     ${orderItemsTable(order)}
     ${shippingBlock(order)}
+    ${
+      order.paymentUrl
+        ? `<p style="margin:24px 0;"><a href="${escapeHtml(order.paymentUrl)}" style="display:inline-block;background:#e60000;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;">Dokończ płatność</a></p>`
+        : ""
+    }
   `;
   await sendMail(
     order.customerEmail,
@@ -226,6 +315,34 @@ export async function sendPasswordResetEmail(params: {
     params.to,
     "Reset hasła",
     emailLayout(settings.storeName, "Reset hasła", body)
+  );
+}
+
+/** Do nowego klienta — potwierdzenie własności adresu e-mail. */
+export async function sendEmailVerificationEmail(params: {
+  to: string;
+  name: string | null;
+  verificationUrl: string;
+}): Promise<void> {
+  const settings = await getShopSettings();
+  const safeUrl = escapeHtml(params.verificationUrl);
+  const body = `
+    <p>Cześć${params.name ? ` ${escapeHtml(params.name)}` : ""}!</p>
+    <p>Potwierdź adres e-mail i ustaw własne hasło, aby aktywować konto w sklepie ${escapeHtml(settings.storeName)}.</p>
+    <p style="margin:24px 0;">
+      <a href="${safeUrl}"
+         style="display:inline-block;background:#e60000;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;">
+        Potwierdź e-mail i ustaw hasło
+      </a>
+    </p>
+    <p style="font-size:13px;color:#6b6b6b;">
+      Link jest ważny przez 24 godziny. Jeśli nie zakładałeś konta, zignoruj tę wiadomość.
+    </p>
+  `;
+  await sendMail(
+    params.to,
+    "Potwierdź adres e-mail",
+    emailLayout(settings.storeName, "Potwierdzenie adresu e-mail", body)
   );
 }
 

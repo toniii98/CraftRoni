@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, Lock, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Button, Input } from "@/components/ui";
@@ -22,9 +21,44 @@ interface FormErrors {
   [key: string]: string;
 }
 
+const CHECKOUT_ATTEMPT_STORAGE_KEY = "craftroni-checkout-attempt-v1";
+
+async function requestFingerprint(value: unknown): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function checkoutKeyForRequest(fingerprint: string): string {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CHECKOUT_ATTEMPT_STORAGE_KEY) || "null") as
+      | { key?: unknown; fingerprint?: unknown }
+      | null;
+    if (
+      stored &&
+      typeof stored.key === "string" &&
+      /^[A-Za-z0-9_-]{20,128}$/.test(stored.key) &&
+      stored.fingerprint === fingerprint
+    ) {
+      return stored.key;
+    }
+  } catch {
+    // Uszkodzony lokalny zapis jest zastępowany nowym kluczem.
+  }
+  const key = crypto.randomUUID();
+  try {
+    localStorage.setItem(
+      CHECKOUT_ATTEMPT_STORAGE_KEY,
+      JSON.stringify({ key, fingerprint, createdAt: new Date().toISOString() })
+    );
+  } catch {
+    // Idempotencja nadal działa w bieżącym żądaniu, nawet gdy storage jest wyłączony.
+  }
+  return key;
+}
+
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { cart, clearCart } = useCart();
+  const { cart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -38,6 +72,7 @@ export default function CheckoutPage() {
     notes: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const checkoutAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
 
   // Zalogowany klient — wstępnie uzupełnij email i imię z konta
   useEffect(() => {
@@ -108,32 +143,73 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
+      const requestBody = {
+        items: cart.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        customerEmail: formData.email,
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        shippingAddress: formData.address,
+        shippingCity: formData.city,
+        shippingZip: formData.zipCode,
+        notes: formData.notes,
+        termsAccepted,
+      };
+      const fingerprint = await requestFingerprint(requestBody);
+      const checkoutKey =
+        checkoutAttemptRef.current?.fingerprint === fingerprint
+          ? checkoutAttemptRef.current.key
+          : checkoutKeyForRequest(fingerprint);
+      checkoutAttemptRef.current = { fingerprint, key: checkoutKey };
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-          customerEmail: formData.email,
-          customerName: formData.name,
-          customerPhone: formData.phone,
-          shippingAddress: formData.address,
-          shippingCity: formData.city,
-          shippingZip: formData.zipCode,
-          notes: formData.notes,
-          termsAccepted,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": checkoutKey,
+        },
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        clearCart();
-        const paymentUrl: string = data.data.paymentUrl;
-        router.push(paymentUrl);
+        const paymentUrl: unknown = data.data?.paymentUrl;
+        if (
+          typeof paymentUrl !== "string" ||
+          !paymentUrl.startsWith("/api/payments/autopay/start?")
+        ) {
+          throw new Error("Nieprawidłowy adres płatności");
+        }
+        const orderNumber: unknown = data.data?.orderNumber;
+        if (typeof orderNumber === "string") {
+          try {
+            localStorage.setItem(
+              CHECKOUT_ATTEMPT_STORAGE_KEY,
+              JSON.stringify({
+                key: checkoutKey,
+                fingerprint,
+                orderNumber,
+                createdAt: new Date().toISOString(),
+              })
+            );
+          } catch {
+            // Nawigacja do płatności pozostaje możliwa bez storage.
+          }
+        }
+        // Koszyk i trwały klucz usuwamy dopiero na stronie potwierdzenia. Jeśli
+        // nawigacja lub sieć zawiedzie, ponowienie trafi do tego samego Order.
+        window.location.assign(paymentUrl);
       } else {
+        if (response.status === 409) {
+          try {
+            localStorage.removeItem(CHECKOUT_ATTEMPT_STORAGE_KEY);
+          } catch {
+            // Brak storage nie może zablokować odtworzenia checkoutu.
+          }
+          checkoutAttemptRef.current = null;
+        }
         setSubmitError(data.error || "Wystąpił błąd podczas składania zamówienia");
         setIsLoading(false);
       }

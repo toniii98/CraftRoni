@@ -12,6 +12,7 @@ import { isUploadFolder, uploadsDir, uploadUrl } from "@/lib/uploads";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_FILES = 10;
+const MAX_REQUEST_SIZE = MAX_FILE_SIZE * MAX_FILES + 1024 * 1024;
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -46,6 +47,21 @@ export async function POST(request: Request) {
   }
 
   try {
+    const contentType = request.headers.get("content-type") || "";
+    if (!/^multipart\/form-data;\s*boundary=/i.test(contentType)) {
+      return NextResponse.json({ error: "Wymagany formularz multipart" }, { status: 415 });
+    }
+    const declaredSize = Number(request.headers.get("content-length"));
+    if (!Number.isSafeInteger(declaredSize) || declaredSize <= 0) {
+      return NextResponse.json(
+        { error: "Upload wymaga poprawnego nagłówka Content-Length" },
+        { status: 411 }
+      );
+    }
+    if (declaredSize > MAX_REQUEST_SIZE) {
+      return NextResponse.json({ error: "Żądanie uploadu jest zbyt duże" }, { status: 413 });
+    }
+
     const formData = await request.formData();
 
     const rawFolder = formData.get("folder") ?? "products";

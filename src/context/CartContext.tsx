@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { Product, CartItem, Cart } from "@/types";
 
 interface CartContextType {
@@ -62,18 +62,20 @@ export function CartProvider({
 
   // Wczytaj koszyk z localStorage przy starcie
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      if (stored) {
-        const items: CartItem[] = JSON.parse(stored);
-        setCart(calculateCartTotals(items, freeShippingThreshold, defaultShippingCost));
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(CART_STORAGE_KEY);
+        if (stored) {
+          const items: CartItem[] = JSON.parse(stored);
+          setCart(calculateCartTotals(items, freeShippingThreshold, defaultShippingCost));
+        }
+      } catch (error) {
+        console.error("Błąd wczytywania koszyka:", error);
       }
-    } catch (error) {
-      console.error("Błąd wczytywania koszyka:", error);
-    }
-    setIsLoaded(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      setIsLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [defaultShippingCost, freeShippingThreshold]);
 
   // Zapisuj koszyk do localStorage przy każdej zmianie
   useEffect(() => {
@@ -134,14 +136,14 @@ export function CartProvider({
     });
   };
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCart({
       items: [],
       subtotal: 0,
       shippingCost: defaultShippingCost,
       total: defaultShippingCost,
     });
-  };
+  }, [defaultShippingCost]);
 
   const isInCart = (productId: string) => {
     return cart.items.some((item) => item.productId === productId);

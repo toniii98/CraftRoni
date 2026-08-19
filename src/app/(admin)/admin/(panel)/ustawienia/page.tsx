@@ -19,6 +19,32 @@ interface Integrations {
   emailConfigured: boolean;
 }
 
+function IntegrationStatus({
+  ok,
+  okLabel,
+  missingLabel,
+}: {
+  ok: boolean;
+  okLabel: string;
+  missingLabel: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {ok ? (
+        <>
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <span className="text-sm text-foreground">{okLabel}</span>
+        </>
+      ) : (
+        <>
+          <XCircle className="h-5 w-5 text-primary" />
+          <span className="text-sm text-foreground">{missingLabel}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function AdminSettingsPage() {
   const [isFetching, setIsFetching] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,22 +170,6 @@ export default function AdminSettingsPage() {
     { id: "email", label: "Email", icon: Mail },
     { id: "account", label: "Konto", icon: KeyRound },
   ];
-
-  const IntegrationStatus = ({ ok, okLabel, missingLabel }: { ok: boolean; okLabel: string; missingLabel: string }) => (
-    <div className="flex items-center gap-2">
-      {ok ? (
-        <>
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <span className="text-sm text-foreground">{okLabel}</span>
-        </>
-      ) : (
-        <>
-          <XCircle className="h-5 w-5 text-primary" />
-          <span className="text-sm text-foreground">{missingLabel}</span>
-        </>
-      )}
-    </div>
-  );
 
   if (isFetching) {
     return (

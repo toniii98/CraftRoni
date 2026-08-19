@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { createServer } = require("node:http");
 const next = require("next");
+const { loadLocalEnvironment, validateProductionEnvironment } = require("./scripts/validate-env.cjs");
+
+loadLocalEnvironment();
+validateProductionEnvironment();
 
 const port = Number.parseInt(process.env.PORT || "3000", 10);
-const dev = process.env.NODE_ENV !== "production";
+const dev = false;
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error("PORT must be an integer between 1 and 65535.");

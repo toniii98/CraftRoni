@@ -13,17 +13,30 @@ const statuses = [
   { value: "CANCELLED", label: "Anulowane" },
 ];
 
+const allowedNext: Record<string, string[]> = {
+  PENDING: ["CANCELLED"],
+  PAID: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: [],
+};
+
 interface OrderStatusFormProps {
   orderId: string;
   currentStatus: string;
+  currentVersion: number;
 }
 
-export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps) {
+export function OrderStatusForm({ orderId, currentStatus, currentVersion }: OrderStatusFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const availableStatuses = statuses.filter(
+    (item) => item.value === currentStatus || allowedNext[currentStatus]?.includes(item.value)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +52,8 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
         body: JSON.stringify({
           status,
           notes: notes || undefined,
+          expectedStatus: currentStatus,
+          expectedVersion: currentVersion,
         }),
       });
 
@@ -72,13 +87,19 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
           onChange={(e) => setStatus(e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
         >
-          {statuses.map((s) => (
+          {availableStatuses.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
             </option>
           ))}
         </select>
       </div>
+
+      {currentStatus === "PENDING" && (
+        <p className="text-xs text-muted">
+          Zamówienie Autopay może oznaczyć jako opłacone wyłącznie podpisany komunikat ITN.
+        </p>
+      )}
 
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-foreground mb-1">
@@ -108,7 +129,7 @@ export function OrderStatusForm({ orderId, currentStatus }: OrderStatusFormProps
 
       <button
         type="submit"
-        disabled={loading || status === currentStatus}
+        disabled={loading || (status === currentStatus && !notes.trim())}
         className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {loading ? (
