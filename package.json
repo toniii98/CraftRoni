@@ -47,7 +47,7 @@
     "prisma": "^6.19.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^7"
   },
   "overrides": {
     "deepmerge-ts": "8.0.1"
